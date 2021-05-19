@@ -2,20 +2,58 @@ package com.example.android_chess
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 
 class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
-    private final val startX = 20f
-    private final val startY = 180f
-    private final val squareSize = 130f
+    private val startX = 20f
+    private val startY = 180f
+    private val squareSize = 130f
+    private val piecesImages = setOf(
+            R.drawable.bb,
+            R.drawable.bh, //BH - Black Horse (the only difference from original names)
+            R.drawable.bk,
+            R.drawable.bp,
+            R.drawable.bq,
+            R.drawable.br,
+            R.drawable.wb,
+            R.drawable.wh,
+            R.drawable.wk,
+            R.drawable.wp,
+            R.drawable.wq,
+            R.drawable.wr
+    )
+
+    private val bitmaps = mutableMapOf<Int, Bitmap>()
+    private val color = Paint()
+
+    init {
+        loadBitmap()
+    }
 
     @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas?) {
-        val color = Paint()
+        createChessBoard(canvas)
+        loadPieces(canvas)
+    }
+
+    private fun loadPieces(canvas: Canvas?) {
+        loadPieceAt(canvas, 0, 0, R.drawable.wr)
+    }
+
+    private fun loadPieceAt(canvas: Canvas?, column: Int, row: Int, pieceName: Int) {
+        val whiteQueenBitmap = bitmaps[pieceName]!!
+        canvas?.drawBitmap(whiteQueenBitmap, null, RectF(startX + column * squareSize, startY + row * squareSize, startX + (column + 1) * squareSize, startY + (row + 1) * squareSize), color)
+    }
+
+    private fun loadBitmap() {
+        piecesImages.forEach {
+            bitmaps[it] = BitmapFactory.decodeResource(resources, it)
+        }
+    }
+
+    private fun createChessBoard(canvas: Canvas?) {
         color.color = Color.argb(255, 238, 238, 212)
         canvas?.drawRect(startX, startY, startX + 8 * squareSize, startY + 8 * squareSize, color)
         color.color = Color.argb(255, 125, 148, 93)
