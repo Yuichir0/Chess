@@ -4,9 +4,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 
-private const val TAG = "MainActivity"
+const val TAG = "MainActivity"
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ChessConnector {
 
     var chessMain = ChessMain()
 
@@ -15,5 +15,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "$chessMain")
+        val chessView = findViewById<ChessView>(R.id.chess_view)
+        chessView.chessConnector = this
+    }
+
+    override fun square(column: Int, row: Int): ChessPiece? {
+        return chessMain.square(column, row)
     }
 }

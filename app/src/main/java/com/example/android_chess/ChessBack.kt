@@ -7,6 +7,14 @@ class ChessMain {
         reset()
     }
 
+    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
+        val movingPiece = square(startColumn, startRow) ?: return
+        if (square(finishColumn, finishRow) != null) pieceBox.remove(square(finishColumn, finishRow))
+
+        movingPiece.column = finishColumn
+        movingPiece.row = finishRow
+    }
+
     fun reset() {
         pieceBox.removeAll(pieceBox)
         for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp))
