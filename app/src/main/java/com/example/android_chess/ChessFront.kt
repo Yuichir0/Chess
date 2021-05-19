@@ -11,7 +11,7 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import java.lang.Integer.min
 
-class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
+class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) {
     private var startX = 20f
     private var startY = 180f
     private var squareSize = 130f
@@ -53,7 +53,6 @@ class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
         loadPieces(canvas)
     }
 
-//    private val canvas: Canvas = TODO()
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event ?: return false
@@ -67,9 +66,7 @@ class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
             MotionEvent.ACTION_UP -> {
                 finishColumn = ((event.x - startX) / squareSize).toInt()
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-//                val chessMain = ChessMain()
                 chessConnector?.movePiece(startColumn, startRow, finishColumn, finishRow)
-//                chessMain.square(finishColumn, finishRow)?.let { loadPieceAt(canvas, finishColumn, finishRow, it.pieceType) }
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow)")
             }
         }
@@ -77,8 +74,8 @@ class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
     }
 
     private fun loadPieces(canvas: Canvas) {
-        val chessMain = ChessMain()
-        chessMain.reset()
+        val chessBack = ChessBack()
+        chessBack.reset()
         for (row in 0..7)
             for (column in 0..7) {
                 val piece = chessConnector?.square(column, row)

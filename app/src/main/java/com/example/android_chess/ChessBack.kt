@@ -1,6 +1,6 @@
 package com.example.android_chess
 
-class ChessMain {
+class ChessBack {
     var pieceBox = mutableSetOf<ChessPiece>()
 
     init {
