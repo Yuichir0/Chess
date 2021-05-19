@@ -51,11 +51,10 @@ class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
 
         createChessBoard(canvas)
         loadPieces(canvas)
-
-        Log.d(TAG, "$width, $height")
     }
 
 //    private val canvas: Canvas = TODO()
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event ?: return false
 
@@ -68,8 +67,8 @@ class ChessView(context: Context?, attrs: AttributeSet?): View(context, attrs) {
             MotionEvent.ACTION_UP -> {
                 finishColumn = ((event.x - startX) / squareSize).toInt()
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-                val chessMain = ChessMain()
-                chessMain.movePiece(startColumn, startRow, finishColumn, finishRow)
+//                val chessMain = ChessMain()
+                chessConnector?.movePiece(startColumn, startRow, finishColumn, finishRow)
 //                chessMain.square(finishColumn, finishRow)?.let { loadPieceAt(canvas, finishColumn, finishRow, it.pieceType) }
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow)")
             }

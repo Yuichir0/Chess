@@ -9,10 +9,14 @@ class ChessMain {
 
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         val movingPiece = square(startColumn, startRow) ?: return
-        if (square(finishColumn, finishRow) != null) pieceBox.remove(square(finishColumn, finishRow))
+        square(finishColumn, finishRow)?.let {
+            if (it.player == movingPiece.player) return
+            pieceBox.remove(it)
+        }
 
-        movingPiece.column = finishColumn
-        movingPiece.row = finishRow
+        if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+        pieceBox.remove(movingPiece)
+        pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType))
     }
 
     fun reset() {

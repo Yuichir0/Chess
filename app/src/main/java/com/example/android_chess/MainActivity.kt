@@ -15,11 +15,15 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "$chessMain")
-        val chessView = findViewById<ChessView>(R.id.chess_view)
-        chessView.chessConnector = this
+        findViewById<ChessView>(R.id.chess_view).chessConnector = this
     }
 
     override fun square(column: Int, row: Int): ChessPiece? {
         return chessMain.square(column, row)
+    }
+
+    override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
+        chessMain.movePiece(startColumn, startRow, finishColumn, finishRow)
+        findViewById<ChessView>(R.id.chess_view).invalidate()
     }
 }
