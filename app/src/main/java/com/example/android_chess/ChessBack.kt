@@ -1,5 +1,11 @@
 package com.example.android_chess
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import java.lang.Integer.max
+import java.lang.Integer.min
+import kotlin.math.abs
+
 class ChessBack {
     var pieceBox = mutableSetOf<ChessPiece>()
 
@@ -7,22 +13,78 @@ class ChessBack {
         reset()
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun clearColumn(startColumn: Int, finishColumn: Int, startRow: Int): Boolean {
+        val minColumn = min(startColumn, finishColumn)
+        val maxColumn = max(startColumn, finishColumn)
+        for (i in minColumn + 1 until maxColumn)
+            if (square(i, startRow) != null)
+                return false
+        return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun clearRow(startRow: Int, finishRow: Int, startColumn: Int): Boolean {
+        val minRow = min(startRow, finishRow)
+        val maxRow = max(startRow, finishRow)
+        for (i in minRow + 1 until maxRow)
+            if (square(startColumn, i) != null)
+                return false
+        return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun clearDiagonal(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
+        val minColumn = min(startColumn, finishColumn)
+        val maxColumn = max(startColumn, finishColumn)
+        var j = 0
+        if (startColumn - finishColumn == startRow - finishRow)
+            for (i in minColumn + 1 until maxColumn) {
+            j++
+            if (square(i, min(startRow, finishRow) + j) != null)
+                return false
+        } else for (i in minColumn + 1 until maxColumn) {
+            j++
+            if (square(i, max(startRow, finishRow) - j) != null)
+                return false
+        }
+        return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         val movingPiece = square(startColumn, startRow) ?: return
-        square(finishColumn, finishRow)?.let {
-            if (it.player == movingPiece.player) return
-            pieceBox.remove(it)
-        }
 
-        if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
-        pieceBox.remove(movingPiece)
-        pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType))
+            if ((movingPiece.type == ChessPieceType.KNIGHT && // Может ли сходить конь
+                        ((abs(startColumn - finishColumn) == 1 && abs(startRow - finishRow) == 2) ||
+                        (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1))) ||
+                (movingPiece.type == ChessPieceType.ROOK && // Может ли ходить ладья
+                        ((finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
+                        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow)))) ||
+                (movingPiece.type == ChessPieceType.BISHOP && // Слон
+                        abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
+                        clearDiagonal(startColumn, startRow, finishColumn, finishRow)) ||
+                (movingPiece.type == ChessPieceType.QUEEN && // Королева
+                        ((finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
+                        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))) ||
+                        abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
+                        clearDiagonal(startColumn, startRow, finishColumn, finishRow))
+        ) {
+            square(finishColumn, finishRow)?.let {
+                if (it.player == movingPiece.player) return
+                pieceBox.remove(it)
+            }
+
+            if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+            pieceBox.remove(movingPiece)
+            pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType))
+        }
     }
 
     fun reset() {
         pieceBox.removeAll(pieceBox)
-        for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp))
-        for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp))
+//        for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp))
+//        for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp))
         for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr))
         for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,7, ChessPlayer.BLACK, ChessPieceType.ROOK, R.drawable.br))
         for (i in 0..1) pieceBox.add(ChessPiece(1 + 5 * i,0, ChessPlayer.WHITE, ChessPieceType.KNIGHT, R.drawable.wh))
