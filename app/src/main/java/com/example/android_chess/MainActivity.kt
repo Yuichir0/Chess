@@ -3,19 +3,30 @@ package com.example.android_chess
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 
 const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity(), ChessConnector {
 
-    var chessBack = ChessBack()
+    private var chessBack = ChessBack()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "$chessBack")
-        findViewById<ChessFront>(R.id.chess_view).chessConnector = this
+        var tiltSecure = 0
+        val chessFront: ChessFront = findViewById<ChessFront>(R.id.chess_view)
+        chessFront.chessConnector = this
+        findViewById<Button>(R.id.reset_button).setOnClickListener {
+            tiltSecure++
+            if (tiltSecure >= 9) {
+                chessBack.reset()
+                chessFront.invalidate()
+                tiltSecure = 0
+            }
+        }
     }
 
     override fun square(column: Int, row: Int): ChessPiece? {

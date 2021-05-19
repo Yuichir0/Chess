@@ -42,6 +42,13 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val min = min(widthMeasureSpec, heightMeasureSpec)
+        setMeasuredDimension(min, min)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
     @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
         val chessBoardSide = min(width, height) * 0.95
