@@ -1,6 +1,7 @@
 package com.example.android_chess
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -8,6 +9,8 @@ import kotlin.math.abs
 
 class ChessBack {
     var pieceBox = mutableSetOf<ChessPiece>()
+    var capturedPieces = mutableListOf<ChessPiece>()
+    var moveHistory = mutableListOf<Int>()
     var whiteTurn = true // Переменная для проверки того, кто ходит
     var blackIsCheck = false
     var whiteIsCheck = false
@@ -98,7 +101,7 @@ class ChessBack {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Возможны ли ходы фигур без проверок на шах, мат и пат FIXME
+    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         val movingPiece = square(startColumn, startRow) ?: return
 
         if (whiteTurn && movingPiece.player == ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
@@ -116,10 +119,15 @@ class ChessBack {
                             movingPiece.type == ChessPieceType.PAWN)) {
                 square(finishColumn, finishRow)?.let {
                     if (it.player == movingPiece.player) return
+                    capturedPieces.add(it)
+                    moveHistory.add(0)
                     pieceBox.remove(it)
                 }
 
                 if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+                val movedModificator = movingPiece.moved
+                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
+                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = false
@@ -156,10 +164,15 @@ class ChessBack {
                             movingPiece.type == ChessPieceType.PAWN)) {
                 square(finishColumn, finishRow)?.let {
                     if (it.player == movingPiece.player) return
+                    capturedPieces.add(it)
+                    moveHistory.add(0) //Добавляю проверочный символ в историю ходов, если при возврате хода будет найден "0" -> поставить фигуру из capturedPieces
                     pieceBox.remove(it)
                 }
 
                 if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+                val movedModificator = movingPiece.moved
+                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
+                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = true
@@ -184,6 +197,76 @@ class ChessBack {
         }
     }
 
+    fun previousTurn() {
+        if (moveHistory.isNotEmpty()) {
+            val lastMove = moveHistory[moveHistory.lastIndex]
+            var movedModificator = false
+            val finishRow: Int
+            val finishColumn: Int
+            val startRow: Int
+            val startColumn: Int
+            if (lastMove < 10000) {
+                finishRow = lastMove % 10
+                finishColumn = lastMove % 100 / 10
+                startRow = lastMove % 1000 / 100
+                startColumn = lastMove / 1000
+            } else {
+                finishRow = lastMove % 10
+                finishColumn = lastMove % 100 / 10
+                startRow = lastMove % 1000 / 100
+                startColumn = lastMove % 10000 / 1000
+                movedModificator = true
+            }
+            val movedPiece = square(finishColumn, finishRow) ?: return
+            pieceBox.remove(movedPiece)
+            if (movedModificator) pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, true))
+            else pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, false))
+            moveHistory.removeLast()
+            if (moveHistory.isNotEmpty() && moveHistory[moveHistory.lastIndex] == 0) {
+                    pieceBox.add(capturedPieces[capturedPieces.lastIndex])
+                    capturedPieces.removeLast()
+                moveHistory.removeLast()
+            }
+
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun movePieceHidden(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Не отображающийся игроку movePiece для проверок шаха, мата, пата
+        val movingPiece = square(startColumn, startRow)
+        val dislocationSquare = square(finishColumn, finishRow)
+        val pieceBoxBackup = pieceBox
+        val whiteTurnBackup = whiteTurn
+        if (movingPiece == null) {
+//            Log.d(TAG, "1")
+            pieceBox.forEach { it ->
+                if (it.player == ChessPlayer.WHITE && !whiteTurn) {
+//                    Log.d(TAG, "2")
+                    for (i in 0..7)
+                        for (j in 0..7) {
+                            movePiece(it.column, it.row, i, j)
+                            pieceBox.forEach { newIt ->
+                                if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING) {
+//                                    Log.d(TAG, "3")
+                                    return
+                                }
+                                else {
+//                                    Log.d(TAG, "4444444444")
+                                    blackIsCheck = true
+                                }
+
+                            }
+                        }
+                }
+            }
+        }
+        Log.d(TAG, "$blackIsCheck")
+    }
+
+    fun movePieceLegal(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // movePiece с учетом проверок из movePieceHidden (Надо будет заменить название этой функции и movePiece после завершения)
+
+    }
+
     fun reset() {
         pieceBox.removeAll(pieceBox)
         for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp, false))
@@ -198,7 +281,6 @@ class ChessBack {
         pieceBox.add(ChessPiece(3,7, ChessPlayer.BLACK, ChessPieceType.QUEEN, R.drawable.bq, false))
         pieceBox.add(ChessPiece(4,0, ChessPlayer.WHITE, ChessPieceType.KING, R.drawable.wk, false))
         pieceBox.add(ChessPiece(4,7, ChessPlayer.BLACK, ChessPieceType.KING, R.drawable.bk, false))
-
     }
 
     fun square(column: Int, row: Int): ChessPiece? {

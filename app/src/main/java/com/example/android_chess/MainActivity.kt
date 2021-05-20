@@ -25,9 +25,17 @@ class MainActivity : AppCompatActivity(), ChessConnector {
             tiltSecure++
             if (tiltSecure >= 9) {
                 chessBack.reset()
+                chessBack.blackIsCheck = false
+                chessBack.whiteIsCheck = false
+                chessBack.whiteTurn = true
                 chessFront.invalidate()
                 tiltSecure = 0
             }
+        }
+        findViewById<Button>(R.id.previous_button).setOnClickListener {
+            chessBack.previousTurn()
+            chessBack.whiteTurn = !chessBack.whiteTurn
+            chessFront.invalidate()
         }
     }
 
@@ -39,5 +47,10 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         chessBack.movePiece(startColumn, startRow, finishColumn, finishRow)
         findViewById<ChessFront>(R.id.chess_view).invalidate()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun movePieceHidden(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
+        chessBack.movePieceHidden(startColumn, startRow, finishColumn, finishRow)
     }
 }
