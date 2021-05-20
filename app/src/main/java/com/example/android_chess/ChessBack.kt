@@ -50,26 +50,41 @@ class ChessBack {
         }
         return true
     }
+    private fun canKnightMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
+        return (abs(startColumn - finishColumn) == 1 && abs(startRow - finishRow) == 2) ||
+        (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun canRookMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
+        return (finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
+        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun canBishopMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
+        return abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
+               clearDiagonal(startColumn, startRow, finishColumn, finishRow)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun canQueenMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
+        return canRookMove(startColumn, startRow, finishColumn, finishRow) ||
+                canBishopMove(startColumn, startRow, finishColumn, finishRow)
+    }
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         val movingPiece = square(startColumn, startRow) ?: return
 
-            if ((movingPiece.type == ChessPieceType.KNIGHT && // Может ли сходить конь
-                        ((abs(startColumn - finishColumn) == 1 && abs(startRow - finishRow) == 2) ||
-                        (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1))) ||
-                (movingPiece.type == ChessPieceType.ROOK && // Может ли ходить ладья
-                        ((finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
-                        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow)))) ||
-                (movingPiece.type == ChessPieceType.BISHOP && // Слон
-                        abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
-                        clearDiagonal(startColumn, startRow, finishColumn, finishRow)) ||
-                (movingPiece.type == ChessPieceType.QUEEN && // Королева
-                        ((finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
-                        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))) ||
-                        abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
-                        clearDiagonal(startColumn, startRow, finishColumn, finishRow))
-        ) {
+                if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
+                            square(startColumn, startRow)?.type == ChessPieceType.KNIGHT) ||
+                    (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
+                            square(startColumn, startRow)?.type == ChessPieceType.ROOK) ||
+                    (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
+                            square(startColumn, startRow)?.type == ChessPieceType.BISHOP) ||
+                    (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
+                            square(startColumn, startRow)?.type == ChessPieceType.QUEEN)) {
             square(finishColumn, finishRow)?.let {
                 if (it.player == movingPiece.player) return
                 pieceBox.remove(it)

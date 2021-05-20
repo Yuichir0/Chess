@@ -1,9 +1,11 @@
 package com.example.android_chess
 
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import androidx.annotation.RequiresApi
 
 const val TAG = "MainActivity"
 
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         return chessBack.square(column, row)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         chessBack.movePiece(startColumn, startRow, finishColumn, finishRow)
         findViewById<ChessFront>(R.id.chess_view).invalidate()
