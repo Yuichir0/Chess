@@ -89,15 +89,16 @@ class ChessBack {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // En Passant нет FIXME
+    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
         return (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
                 (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
                 (abs(finishColumn - startColumn) == 1 && abs(finishRow - startRow) == 1 && square(finishColumn, finishRow) != null) ||
                 (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
                         square(finishColumn, finishRow - 1) == null && square(startColumn, startRow)?.moved == false) ||
                 (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
-                        square(finishColumn, finishRow + 1) == null && square(startColumn, startRow)?.moved == false)
-
+                        square(finishColumn, finishRow + 1) == null && square(startColumn, startRow)?.moved == false) ||
+                (abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 && moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) || // En Passant
+                (abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 && moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3))
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -125,12 +126,6 @@ class ChessBack {
                 }
 
                 if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
-                val movedModificator = movingPiece.moved
-                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
-                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
-                pieceBox.remove(movingPiece)
-                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
-                whiteTurn = false
 
                 if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
                     pieceBox.remove(square(startColumn + 3, startRow))
@@ -148,6 +143,25 @@ class ChessBack {
                     pieceBox.remove(square(startColumn - 4, startRow))
                     pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
                 }
+                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 &&
+                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) {
+                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    pieceBox.remove(square(finishColumn, finishRow - 1))
+                    moveHistory.add(0)
+                }
+                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
+                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
+                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    pieceBox.remove(square(finishColumn, finishRow + 1))
+                    moveHistory.add(0)
+                }
+
+                val movedModificator = movingPiece.moved
+                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
+                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
+                pieceBox.remove(movingPiece)
+                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+                whiteTurn = false
             }
         } else if (!whiteTurn && movingPiece.player != ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
             if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
