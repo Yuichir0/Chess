@@ -74,7 +74,24 @@ class ChessBack {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
+    private fun canKingMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // Без рокировки
+        return abs(finishColumn - startColumn) <= 1 && abs(finishRow - startRow) <= 1
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // En Passant нет TODO()
+        return (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
+                (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
+                (abs(finishColumn - startColumn) == 1 && abs(finishRow - startRow) == 1 && square(finishColumn, finishRow) != null) ||
+                (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
+                        square(finishColumn, finishRow - 1) == null && square(startColumn, startRow)?.moved == false) ||
+                (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
+                        square(finishColumn, finishRow + 1) == null && square(startColumn, startRow)?.moved == false)
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Возможны ли ходы фигур без проверок на шах, мат и пат
         val movingPiece = square(startColumn, startRow) ?: return
 
                 if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
@@ -84,7 +101,11 @@ class ChessBack {
                     (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
                             square(startColumn, startRow)?.type == ChessPieceType.BISHOP) ||
                     (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.QUEEN)) {
+                            square(startColumn, startRow)?.type == ChessPieceType.QUEEN) ||
+                    (canKingMove(startColumn, startRow, finishColumn, finishRow) &&
+                            square(startColumn, startRow)?.type == ChessPieceType.KING) ||
+                    (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
+                                square(startColumn, startRow)?.type == ChessPieceType.PAWN)    ) {
             square(finishColumn, finishRow)?.let {
                 if (it.player == movingPiece.player) return
                 pieceBox.remove(it)
@@ -92,24 +113,24 @@ class ChessBack {
 
             if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
             pieceBox.remove(movingPiece)
-            pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType))
+            pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
         }
     }
 
     fun reset() {
         pieceBox.removeAll(pieceBox)
-//        for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp))
-//        for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp))
-        for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr))
-        for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,7, ChessPlayer.BLACK, ChessPieceType.ROOK, R.drawable.br))
-        for (i in 0..1) pieceBox.add(ChessPiece(1 + 5 * i,0, ChessPlayer.WHITE, ChessPieceType.KNIGHT, R.drawable.wh))
-        for (i in 0..1) pieceBox.add(ChessPiece(1 + 5 * i,7, ChessPlayer.BLACK, ChessPieceType.KNIGHT, R.drawable.bh))
-        for (i in 0..1) pieceBox.add(ChessPiece(2 + 3 * i,0, ChessPlayer.WHITE, ChessPieceType.BISHOP, R.drawable.wb))
-        for (i in 0..1) pieceBox.add(ChessPiece(2 + 3 * i,7, ChessPlayer.BLACK, ChessPieceType.BISHOP, R.drawable.bb))
-        pieceBox.add(ChessPiece(3,0, ChessPlayer.WHITE, ChessPieceType.QUEEN, R.drawable.wq))
-        pieceBox.add(ChessPiece(3,7, ChessPlayer.BLACK, ChessPieceType.QUEEN, R.drawable.bq))
-        pieceBox.add(ChessPiece(4,0, ChessPlayer.WHITE, ChessPieceType.KING, R.drawable.wk))
-        pieceBox.add(ChessPiece(4,7, ChessPlayer.BLACK, ChessPieceType.KING, R.drawable.bk))
+        for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp, false))
+        for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(0 + 7 * i,7, ChessPlayer.BLACK, ChessPieceType.ROOK, R.drawable.br, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(1 + 5 * i,0, ChessPlayer.WHITE, ChessPieceType.KNIGHT, R.drawable.wh, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(1 + 5 * i,7, ChessPlayer.BLACK, ChessPieceType.KNIGHT, R.drawable.bh, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(2 + 3 * i,0, ChessPlayer.WHITE, ChessPieceType.BISHOP, R.drawable.wb, false))
+        for (i in 0..1) pieceBox.add(ChessPiece(2 + 3 * i,7, ChessPlayer.BLACK, ChessPieceType.BISHOP, R.drawable.bb, false))
+        pieceBox.add(ChessPiece(3,0, ChessPlayer.WHITE, ChessPieceType.QUEEN, R.drawable.wq, false))
+        pieceBox.add(ChessPiece(3,7, ChessPlayer.BLACK, ChessPieceType.QUEEN, R.drawable.bq, false))
+        pieceBox.add(ChessPiece(4,0, ChessPlayer.WHITE, ChessPieceType.KING, R.drawable.wk, false))
+        pieceBox.add(ChessPiece(4,7, ChessPlayer.BLACK, ChessPieceType.KING, R.drawable.bk, false))
 
     }
 
