@@ -8,6 +8,9 @@ import kotlin.math.abs
 
 class ChessBack {
     var pieceBox = mutableSetOf<ChessPiece>()
+    var whiteTurn = true // Переменная для проверки того, кто ходит
+    var blackIsCheck = false
+    var whiteIsCheck = false
 
     init {
         reset()
@@ -98,7 +101,8 @@ class ChessBack {
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Возможны ли ходы фигур без проверок на шах, мат и пат FIXME
         val movingPiece = square(startColumn, startRow) ?: return
 
-                if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
+        if (whiteTurn && movingPiece.player == ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
+            if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
                             movingPiece.type == ChessPieceType.KNIGHT) ||
                     (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
                             movingPiece.type == ChessPieceType.ROOK) ||
@@ -110,29 +114,72 @@ class ChessBack {
                             movingPiece.type == ChessPieceType.KING) ||
                     (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
                             movingPiece.type == ChessPieceType.PAWN)) {
-            square(finishColumn, finishRow)?.let {
-                if (it.player == movingPiece.player) return
-                pieceBox.remove(it)
-            }
+                square(finishColumn, finishRow)?.let {
+                    if (it.player == movingPiece.player) return
+                    pieceBox.remove(it)
+                }
 
-            if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
-            pieceBox.remove(movingPiece)
-            pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
-            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
-                pieceBox.remove(square(startColumn + 3, startRow))
-                pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+                pieceBox.remove(movingPiece)
+                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+                whiteTurn = false
+
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                }
             }
-            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
-                pieceBox.remove(square(startColumn + 3, startRow))
-                pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-            }
-            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
-                pieceBox.remove(square(startColumn - 4, startRow))
-                pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-            }
-            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
-                pieceBox.remove(square(startColumn - 4, startRow))
-                pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+        } else if (!whiteTurn && movingPiece.player != ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
+            if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.KNIGHT) ||
+                    (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.ROOK) ||
+                    (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.BISHOP) ||
+                    (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.QUEEN) ||
+                    (canKingMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.KING) ||
+                    (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
+                            movingPiece.type == ChessPieceType.PAWN)) {
+                square(finishColumn, finishRow)?.let {
+                    if (it.player == movingPiece.player) return
+                    pieceBox.remove(it)
+                }
+
+                if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+                pieceBox.remove(movingPiece)
+                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+                whiteTurn = true
+
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                }
             }
         }
     }
