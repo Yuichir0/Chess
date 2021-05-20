@@ -33,9 +33,11 @@ class MainActivity : AppCompatActivity(), ChessConnector {
             }
         }
         findViewById<Button>(R.id.previous_button).setOnClickListener {
-            chessBack.previousTurn()
-            chessBack.whiteTurn = !chessBack.whiteTurn
-            chessFront.invalidate()
+            if (chessBack.moveHistory.isNotEmpty()) {
+                chessBack.previousTurn()
+                chessBack.whiteTurn = !chessBack.whiteTurn
+                chessFront.invalidate()
+            }
         }
     }
 

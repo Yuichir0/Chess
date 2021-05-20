@@ -163,7 +163,9 @@ class ChessBack {
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = false
             }
-        } else if (!whiteTurn && movingPiece.player != ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
+        }
+
+        else if (!whiteTurn && movingPiece.player != ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
             if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
                             movingPiece.type == ChessPieceType.KNIGHT) ||
                     (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
@@ -179,34 +181,51 @@ class ChessBack {
                 square(finishColumn, finishRow)?.let {
                     if (it.player == movingPiece.player) return
                     capturedPieces.add(it)
-                    moveHistory.add(0) //Добавляю проверочный символ в историю ходов, если при возврате хода будет найден "0" -> поставить фигуру из capturedPieces
+                    moveHistory.add(0)
                     pieceBox.remove(it)
                 }
 
                 if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                    moveHistory.add(1)
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn + 3, startRow))
+                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                    moveHistory.add(2)
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                    moveHistory.add(3)
+                }
+                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
+                    pieceBox.remove(square(startColumn - 4, startRow))
+                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                    moveHistory.add(4)
+                }
+                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 &&
+                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) {
+                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    pieceBox.remove(square(finishColumn, finishRow - 1))
+                    moveHistory.add(0)
+                }
+                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
+                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
+                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    pieceBox.remove(square(finishColumn, finishRow + 1))
+                    moveHistory.add(0)
+                }
+
                 val movedModificator = movingPiece.moved
                 if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
                 else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = true
-
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                }
             }
         }
     }
@@ -237,11 +256,30 @@ class ChessBack {
             else pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, false))
             moveHistory.removeLast()
             if (moveHistory.isNotEmpty() && moveHistory[moveHistory.lastIndex] == 0) {
-                    pieceBox.add(capturedPieces[capturedPieces.lastIndex])
-                    capturedPieces.removeLast()
+                pieceBox.add(capturedPieces[capturedPieces.lastIndex])
+                capturedPieces.removeLast()
                 moveHistory.removeLast()
             }
-
+            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex - 1] == 1) {
+                pieceBox.remove(square(5, 0))
+                pieceBox.add(ChessPiece(7, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr, false))
+                moveHistory.removeLast()
+            }
+            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex - 1] == 2) {
+                pieceBox.remove(square(5, 7))
+                pieceBox.add(ChessPiece(7, 7, ChessPlayer.BLACK, ChessPieceType.ROOK, R.drawable.br, false))
+                moveHistory.removeLast()
+            }
+            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex - 1] == 3) {
+                pieceBox.remove(square(3, 0))
+                pieceBox.add(ChessPiece(0, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr, false))
+                moveHistory.removeLast()
+            }
+            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex - 1] == 4) {
+                pieceBox.remove(square(3, 0))
+                pieceBox.add(ChessPiece(7, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.br, false))
+                moveHistory.removeLast()
+            }
         }
     }
 
