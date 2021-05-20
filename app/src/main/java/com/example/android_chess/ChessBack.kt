@@ -74,12 +74,16 @@ class ChessBack {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun canKingMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // Без рокировки
-        return abs(finishColumn - startColumn) <= 1 && abs(finishRow - startRow) <= 1
+    private fun canKingMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // Доделать отсутствие возможности рокироваться при угрозе ладье или королю после хода. Не забыть, что при создании возможности повышения пешки у созданной фигуры должен быть параметр moved = true FIXME
+        return (abs(finishColumn - startColumn) <= 1 && abs(finishRow - startRow) <= 1) ||
+                (square(startColumn, startRow)?.moved == false && square(startColumn + 1, startRow) == null && square(startColumn + 2, startRow) == null &&
+                        square(startColumn + 3, startRow)?.moved == false && (finishColumn - startColumn == 2) && (finishRow - startRow == 0)) ||
+                (square(startColumn, startRow)?.moved == false && square(startColumn - 1, startRow) == null && square(startColumn - 2, startRow) == null && square(startColumn - 3, startRow) == null &&
+                        square(startColumn - 4, startRow)?.moved == false && (finishColumn - startColumn == -2) && (finishRow - startRow == 0))
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // En Passant нет TODO()
+    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean { // En Passant нет FIXME
         return (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
                 (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
                 (abs(finishColumn - startColumn) == 1 && abs(finishRow - startRow) == 1 && square(finishColumn, finishRow) != null) ||
@@ -91,21 +95,21 @@ class ChessBack {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Возможны ли ходы фигур без проверок на шах, мат и пат
+    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Возможны ли ходы фигур без проверок на шах, мат и пат FIXME
         val movingPiece = square(startColumn, startRow) ?: return
 
                 if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.KNIGHT) ||
+                            movingPiece.type == ChessPieceType.KNIGHT) ||
                     (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.ROOK) ||
+                            movingPiece.type == ChessPieceType.ROOK) ||
                     (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.BISHOP) ||
+                            movingPiece.type == ChessPieceType.BISHOP) ||
                     (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.QUEEN) ||
+                            movingPiece.type == ChessPieceType.QUEEN) ||
                     (canKingMove(startColumn, startRow, finishColumn, finishRow) &&
-                            square(startColumn, startRow)?.type == ChessPieceType.KING) ||
+                            movingPiece.type == ChessPieceType.KING) ||
                     (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
-                                square(startColumn, startRow)?.type == ChessPieceType.PAWN)    ) {
+                            movingPiece.type == ChessPieceType.PAWN)) {
             square(finishColumn, finishRow)?.let {
                 if (it.player == movingPiece.player) return
                 pieceBox.remove(it)
@@ -114,6 +118,22 @@ class ChessBack {
             if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
             pieceBox.remove(movingPiece)
             pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
+                pieceBox.remove(square(startColumn + 3, startRow))
+                pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+            }
+            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
+                pieceBox.remove(square(startColumn + 3, startRow))
+                pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+            }
+            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
+                pieceBox.remove(square(startColumn - 4, startRow))
+                pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+            }
+            if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
+                pieceBox.remove(square(startColumn - 4, startRow))
+                pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+            }
         }
     }
 
