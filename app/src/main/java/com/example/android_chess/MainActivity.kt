@@ -51,8 +51,9 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         findViewById<ChessFront>(R.id.chess_view).invalidate()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun movePieceHidden(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
-        chessBack.movePieceHidden(startColumn, startRow, finishColumn, finishRow)
-    }
+
+//    @RequiresApi(Build.VERSION_CODES.N)
+//    override fun movePieceHidden() {
+//        chessBack.movePieceHidden()
+//    }
 }
