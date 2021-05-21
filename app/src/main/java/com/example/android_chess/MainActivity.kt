@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageView
 import androidx.annotation.RequiresApi
 
 const val TAG = "MainActivity"
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity(), ChessConnector {
                 chessFront.invalidate()
             }
         }
+
     }
 
     override fun square(column: Int, row: Int): ChessPiece? {

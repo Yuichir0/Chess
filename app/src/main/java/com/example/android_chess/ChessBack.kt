@@ -16,6 +16,7 @@ class ChessBack {
 //    var whiteIsCheck = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
+    var chosenPromotion: ChessPieceType = ChessPieceType.PAWN
 
     init {
         reset()
@@ -171,6 +172,14 @@ class ChessBack {
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = false
+//                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && finishRow == 7) {
+//                    square(finishColumn, finishRow)?.let { capturedPieces.add(it) }
+//                    pieceBox.remove(square(finishColumn, finishRow))
+//                    while (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN) {
+//
+//                        pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+//                    }
+//                }
             }
         }
 
@@ -302,7 +311,7 @@ class ChessBack {
 //        pieceBox.forEach {
 //            if (it.player == ChessPlayer.WHITE)
 //                for (i in 0..7)
-//                    for (j in 0..7) {
+//                    for (j in 0..7) { // Всегда крашит приложение при i = 0 j = 2
 //                        movePiece(it.column, it.row, i, j)
 //                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING)
 //                            Log.d(TAG, "Check")
