@@ -2,6 +2,7 @@ package com.example.android_chess
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -172,14 +173,12 @@ class ChessBack {
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = false
-//                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && finishRow == 7) {
-//                    square(finishColumn, finishRow)?.let { capturedPieces.add(it) }
-//                    pieceBox.remove(square(finishColumn, finishRow))
-//                    while (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN) {
-//
-//                        pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
-//                    }
-//                }
+                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && (finishRow == 7 || finishRow == 0)) {
+                    pieceBox.remove(square(finishColumn, finishRow))
+                    moveHistory.add(-5)
+                    if (finishRow == 7) pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.wq, true))
+                    else pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.bq, true))
+                }
             }
         }
 
@@ -247,6 +246,12 @@ class ChessBack {
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = true
+                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && (finishRow == 7 || finishRow == 0)) {
+                    pieceBox.remove(square(finishColumn, finishRow))
+                    moveHistory.add(-5)
+                    if (finishRow == 7) pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.wq, true))
+                    else pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.bq, true))
+                }
             }
         }
     }
@@ -259,6 +264,7 @@ class ChessBack {
             val finishColumn: Int
             val startRow: Int
             val startColumn: Int
+            var pawnWasPromoted = false
             if (lastMove < 10000) {
                 finishRow = lastMove % 10
                 finishColumn = lastMove % 100 / 10
@@ -271,13 +277,32 @@ class ChessBack {
                 startColumn = lastMove % 10000 / 1000
                 movedModificator = true
             }
+
             val movedPiece = square(finishColumn, finishRow) ?: return
             pieceBox.remove(movedPiece)
+
+            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -5) {
+                moveHistory.removeLast()
+                pawnWasPromoted = true
+            }
+
             if (movedModificator) pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, true))
             else pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, false))
+
+            if (pawnWasPromoted && movedPiece.player == ChessPlayer.WHITE) {
+                pieceBox.remove(movedPiece)
+                pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.wp, true))
+            }
+
+            if (pawnWasPromoted && movedPiece.player == ChessPlayer.BLACK) {
+                pieceBox.remove(movedPiece)
+                pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.bp, true))
+            }
+
             if (movedPiece.type == ChessPieceType.KING && movedPiece.player == ChessPlayer.WHITE) kingWhiteSquare = Pair(startColumn, startRow)
             if (movedPiece.type == ChessPieceType.KING && movedPiece.player == ChessPlayer.BLACK) kingBlackSquare = Pair(startColumn, startRow)
             moveHistory.removeLast()
+
             if (moveHistory.isNotEmpty() && moveHistory[moveHistory.lastIndex] == 0) {
                 pieceBox.add(capturedPieces[capturedPieces.lastIndex])
                 capturedPieces.removeLast()
@@ -303,6 +328,7 @@ class ChessBack {
                 pieceBox.add(ChessPiece(7, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.br, false))
                 moveHistory.removeLast()
             }
+            pawnWasPromoted = false
         }
     }
 
@@ -318,10 +344,6 @@ class ChessBack {
 //                        previousTurn()
 //                    }
 //        }
-//    }
-
-//    fun movePieceLegal(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
-//
 //    }
 
     fun reset() {
