@@ -15,6 +15,7 @@ class ChessBack {
     var whiteTurn = true // Переменная для проверки того, кто ходит
 //    var blackIsCheck = false
 //    var whiteIsCheck = false
+    var movePieceWasSuccesful = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
     var chosenPromotion: ChessPieceType = ChessPieceType.PAWN
@@ -107,6 +108,7 @@ class ChessBack {
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
+        movePieceWasSuccesful = false
         val movingPiece = square(startColumn, startRow) ?: return
 
         if (whiteTurn && movingPiece.player == ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
@@ -170,6 +172,7 @@ class ChessBack {
                 val movedModificator = movingPiece.moved
                 if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
                 else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
+                movePieceWasSuccesful = true
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = false
@@ -243,6 +246,7 @@ class ChessBack {
                 val movedModificator = movingPiece.moved
                 if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
                 else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
+                movePieceWasSuccesful = true
                 pieceBox.remove(movingPiece)
                 pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
                 whiteTurn = true
@@ -257,14 +261,20 @@ class ChessBack {
     }
 
     fun previousTurn() {
-        if (moveHistory.isNotEmpty()) {
-            val lastMove = moveHistory[moveHistory.lastIndex]
+        if (movePieceWasSuccesful) {
+            var lastMove = moveHistory[moveHistory.lastIndex]
             var movedModificator = false
             val finishRow: Int
             val finishColumn: Int
             val startRow: Int
             val startColumn: Int
             var pawnWasPromoted = false
+            if (moveHistory[moveHistory.lastIndex] == -5) {
+                moveHistory.removeLast()
+                pawnWasPromoted = true
+            }
+            lastMove = moveHistory[moveHistory.lastIndex]
+
             if (lastMove < 10000) {
                 finishRow = lastMove % 10
                 finishColumn = lastMove % 100 / 10
@@ -281,16 +291,11 @@ class ChessBack {
             val movedPiece = square(finishColumn, finishRow) ?: return
             pieceBox.remove(movedPiece)
 
-            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -5) {
-                moveHistory.removeLast()
-                pawnWasPromoted = true
-            }
-
             if (movedModificator) pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, true))
             else pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, false))
 
             if (pawnWasPromoted && movedPiece.player == ChessPlayer.WHITE) {
-                pieceBox.remove(movedPiece)
+                pieceBox.remove(square(startColumn, startRow))
                 pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.wp, true))
             }
 
@@ -332,19 +337,29 @@ class ChessBack {
         }
     }
 
-//    @RequiresApi(Build.VERSION_CODES.N)
-//    fun movePieceHidden() { // 9000 попытка сделать условие шаха. Для условия мата, в теории, надо к условию шаха добавить еще 1 проверку на ход каждой фигуры и последующей угрозы королю. А ничья будет при соблюдении обоих условий.
-//        pieceBox.forEach {
-//            if (it.player == ChessPlayer.WHITE)
-//                for (i in 0..7)
-//                    for (j in 0..7) { // Всегда крашит приложение при i = 0 j = 2
-//                        movePiece(it.column, it.row, i, j)
-//                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING)
-//                            Log.d(TAG, "Check")
-//                        previousTurn()
-//                    }
-//        }
-//    }
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun movePieceHidden() { // Для условия мата, в теории, надо к условию шаха добавить еще 1 проверку на ход каждой фигуры и последующей угрозы королю. А ничья будет при соблюдении обоих условий.
+        val whileTurnBackup = whiteTurn
+        pieceBox.toMutableList().forEach {
+            if (it.player == ChessPlayer.WHITE)
+                for (i in 0..7)
+                    for (j in 0..7) {
+                        movePiece(it.column, it.row, i, j)
+                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING)
+                            Log.d(TAG, "Check")
+                        previousTurn()
+                    }
+            if (it.player == ChessPlayer.BLACK)
+                for (i in 0..7)
+                    for (j in 0..7) {
+                        movePiece(it.column, it.row, i, j)
+                        if (Pair(i, j) == kingWhiteSquare && square(i, j)?.type != ChessPieceType.KING)
+                            Log.d(TAG, "Check")
+                        previousTurn()
+                    }
+        }
+        whiteTurn = whileTurnBackup
+    }
 
     fun reset() {
         pieceBox.removeAll(pieceBox)

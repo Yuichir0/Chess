@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     }
 
 
-//    @RequiresApi(Build.VERSION_CODES.N)
-//    override fun movePieceHidden() {
-//        chessBack.movePieceHidden()
-//    }
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun movePieceHidden() {
+        chessBack.movePieceHidden()
+    }
 }
