@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity(), ChessConnector {
             tiltSecure++
             if (tiltSecure >= 9) {
                 chessBack.reset()
-                chessBack.blackIsCheck = false
-                chessBack.whiteIsCheck = false
+//                chessBack.blackIsCheck = false
+//                chessBack.whiteIsCheck = false
                 chessBack.whiteTurn = true
                 chessFront.invalidate()
                 tiltSecure = 0

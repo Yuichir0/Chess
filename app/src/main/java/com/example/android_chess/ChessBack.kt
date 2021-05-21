@@ -12,8 +12,8 @@ class ChessBack {
     var capturedPieces = mutableListOf<ChessPiece>()
     var moveHistory = mutableListOf<Int>()
     var whiteTurn = true // Переменная для проверки того, кто ходит
-    var blackIsCheck = false
-    var whiteIsCheck = false
+//    var blackIsCheck = false
+//    var whiteIsCheck = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
 
@@ -157,7 +157,7 @@ class ChessBack {
                 }
                 if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
                         moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
-                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    square(finishColumn, finishRow + 1)?.let { capturedPieces.add(it) }
                     pieceBox.remove(square(finishColumn, finishRow + 1))
                     moveHistory.add(0)
                 }
@@ -224,7 +224,7 @@ class ChessBack {
                 }
                 if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
                         moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
-                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
+                    square(finishColumn, finishRow + 1)?.let { capturedPieces.add(it) }
                     pieceBox.remove(square(finishColumn, finishRow + 1))
                     moveHistory.add(0)
                 }
