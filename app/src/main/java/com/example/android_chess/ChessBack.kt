@@ -306,6 +306,7 @@ class ChessBack {
 //                        movePiece(it.column, it.row, i, j)
 //                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING)
 //                            Log.d(TAG, "Check")
+//                        previousTurn()
 //                    }
 //        }
 //    }
