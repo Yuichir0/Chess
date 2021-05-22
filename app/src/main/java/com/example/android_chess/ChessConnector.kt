@@ -5,4 +5,5 @@ interface ChessConnector {
     fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int)
     fun checkCheck()
     fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int)
+    fun gameOver()
 }

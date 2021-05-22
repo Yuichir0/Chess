@@ -45,7 +45,6 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     @RequiresApi(Build.VERSION_CODES.N)
     override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         chessBack.movePiece(startColumn, startRow, finishColumn, finishRow)
-        findViewById<ChessFront>(R.id.chess_view).invalidate()
     }
 
 
@@ -58,7 +57,14 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     override fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         chessBack.moveCheckBlock(startColumn, startRow, finishColumn, finishRow)
         findViewById<ChessFront>(R.id.chess_view).invalidate()
-        if (!chessBack.whiteKingAlive) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
-        if (!chessBack.blackKingAlive) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
+        if (chessBack.whiteIsCheck || chessBack.blackIsCheck) Toast.makeText(applicationContext, "Check!", Toast.LENGTH_SHORT).show()
+        if (chessBack.gameOverBlackWin) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
+        if (chessBack.gameOverWhiteWin) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
+        if (chessBack.gameOverPat) Toast.makeText(applicationContext, "Everyone lost!", Toast.LENGTH_LONG).show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun gameOver() {
+        chessBack.gameOver()
     }
 }
