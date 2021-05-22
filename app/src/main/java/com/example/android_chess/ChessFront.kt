@@ -76,6 +76,7 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
                 chessConnector?.movePieceHidden()
                 chessConnector?.movePiece(startColumn, startRow, finishColumn, finishRow)
+
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow, ${chessConnector?.square(finishColumn, finishRow)?.type})")
             }
         }

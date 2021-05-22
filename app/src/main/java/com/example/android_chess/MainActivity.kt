@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         chessFront.chessConnector = this
         findViewById<Button>(R.id.reset_button).setOnClickListener {
                 chessBack.reset()
-//                chessBack.blackIsCheck = false
-//                chessBack.whiteIsCheck = false
+                chessBack.blackIsCheck = false
+                chessBack.whiteIsCheck = false
                 chessBack.whiteTurn = true
                 chessFront.invalidate()
         }

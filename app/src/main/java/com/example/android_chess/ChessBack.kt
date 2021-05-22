@@ -13,8 +13,8 @@ class ChessBack {
     var capturedPieces = mutableListOf<ChessPiece>()
     var moveHistory = mutableListOf<Int>()
     var whiteTurn = true // Переменная для проверки того, кто ходит
-//    var blackIsCheck = false
-//    var whiteIsCheck = false
+    var blackIsCheck = false
+    var whiteIsCheck = false
     var movePieceWasSuccesful = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
@@ -300,7 +300,7 @@ class ChessBack {
             }
 
             if (pawnWasPromoted && movedPiece.player == ChessPlayer.BLACK) {
-                pieceBox.remove(movedPiece)
+                pieceBox.remove(square(startColumn, startRow))
                 pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.bp, true))
             }
 
@@ -345,16 +345,20 @@ class ChessBack {
                 for (i in 0..7)
                     for (j in 0..7) {
                         movePiece(it.column, it.row, i, j)
-                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING)
-                            Log.d(TAG, "Check")
+                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING) {
+                            blackIsCheck = true
+                            Log.d(TAG, "black is Check = $blackIsCheck")
+                        }
                         previousTurn()
                     }
             if (it.player == ChessPlayer.BLACK)
                 for (i in 0..7)
                     for (j in 0..7) {
                         movePiece(it.column, it.row, i, j)
-                        if (Pair(i, j) == kingWhiteSquare && square(i, j)?.type != ChessPieceType.KING)
-                            Log.d(TAG, "Check")
+                        if (Pair(i, j) == kingWhiteSquare && square(i, j)?.type != ChessPieceType.KING) {
+                            whiteIsCheck = true
+                            Log.d(TAG, "white is Check = $whiteIsCheck")
+                        }
                         previousTurn()
                     }
         }
