@@ -18,6 +18,8 @@ class ChessBack {
     var movePieceWasSuccesful = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
+    var whiteKingAlive = false
+    var blackKingAlive = false
 
     init {
         reset()
@@ -334,6 +336,14 @@ class ChessBack {
             }
             pawnWasPromoted = false
             whiteTurn = !whiteTurn
+            pieceBox.forEach {
+                if (it.player == ChessPlayer.WHITE && it.type == ChessPieceType.KING)
+                    whiteKingAlive = true
+            }
+            pieceBox.forEach {
+                if (it.player == ChessPlayer.BLACK && it.type == ChessPieceType.KING)
+                    blackKingAlive = true
+            }
         }
     }
 
@@ -354,7 +364,7 @@ class ChessBack {
                         }
                         if (!blackKingAlive) {
                             blackIsCheck = true
-                            Log.d(TAG, "black is Check = $blackIsCheck by $it")
+                            Log.d(TAG, "black is Check by $it")
                         }
                         previousTurn()
                     } else {
@@ -366,13 +376,55 @@ class ChessBack {
                         }
                         if (!whiteKingAlive) {
                             whiteIsCheck = true
-                            Log.d(TAG, "white is Check = $whiteIsCheck  by $it")
+                            Log.d(TAG, "white is Check by $it")
                         }
                         previousTurn()
                     }
         }
         whiteTurn = whiteTurnBackup
         movePieceWasSuccesful = movePieceWasSuccesfulBackup
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Блокировка ходов, если текущему игроку стоит шах
+        movePiece(startColumn, startRow, finishColumn, finishRow)
+        checkCheck()
+        val whiteTurnBackup = whiteTurn
+        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
+        var blackStillCheck = false
+        var whiteStillCheck = false
+        pieceBox.toMutableList().forEach {
+            for (i in 0..7)
+                for (j in 0..7)
+                    if (it.player == ChessPlayer.WHITE) {
+                        movePiece(it.column, it.row, i, j)
+                        var blackKingAlive = false
+                        pieceBox.forEach { newIt ->
+                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
+                                blackKingAlive = true
+                        }
+                        if (!blackKingAlive) {
+                            blackStillCheck = true
+                            Log.d(TAG, "black is still Check by $it")
+                        }
+                        previousTurn()
+                    } else {
+                        movePiece(it.column, it.row, i, j)
+                        var whiteKingAlive = false
+                        pieceBox.forEach { newIt ->
+                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
+                                whiteKingAlive = true
+                        }
+                        if (!whiteKingAlive) {
+                            whiteStillCheck = true
+                            Log.d(TAG, "white is still Check by $it")
+                        }
+                        previousTurn()
+                    }
+        }
+        whiteTurn = whiteTurnBackup
+        movePieceWasSuccesful = movePieceWasSuccesfulBackup
+        if (blackStillCheck || whiteStillCheck) previousTurn()
     }
 
     fun reset() {
