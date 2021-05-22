@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "$chessBack")
-        var tiltSecure = 0
         val chessFront: ChessFront = findViewById<ChessFront>(R.id.chess_view)
         chessFront.chessConnector = this
         findViewById<Button>(R.id.reset_button).setOnClickListener {
@@ -29,16 +28,15 @@ class MainActivity : AppCompatActivity(), ChessConnector {
                 chessBack.whiteIsCheck = false
                 chessBack.whiteTurn = true
                 chessFront.invalidate()
+            Log.d(TAG, "New game")
         }
         findViewById<Button>(R.id.previous_button).setOnClickListener {
             if (chessBack.moveHistory.isNotEmpty()) {
                 chessBack.previousTurn()
-                chessBack.whiteTurn = !chessBack.whiteTurn
                 chessFront.invalidate()
                 Log.d(TAG, "Previous move")
             }
         }
-
     }
 
     override fun square(column: Int, row: Int): ChessPiece? {
@@ -49,13 +47,23 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
         chessBack.movePiece(startColumn, startRow, finishColumn, finishRow)
         findViewById<ChessFront>(R.id.chess_view).invalidate()
-        if (chessBack.whiteTurn && chessBack.square(chessBack.kingWhiteSquare.first, chessBack.kingWhiteSquare.second) == square(finishColumn, finishRow)) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
-        if (!chessBack.whiteTurn && chessBack.square(chessBack.kingBlackSquare.first, chessBack.kingBlackSquare.second) == square(finishColumn, finishRow)) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
+        var whiteKingAlive = false
+        chessBack.pieceBox.forEach {
+            if (it.player == ChessPlayer.WHITE && it.type == ChessPieceType.KING)
+                whiteKingAlive = true
+        }
+        var blackKingAlive = false
+        chessBack.pieceBox.forEach {
+            if (it.player == ChessPlayer.BLACK && it.type == ChessPieceType.KING)
+                blackKingAlive = true
+        }
+        if (!whiteKingAlive) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
+        if (!blackKingAlive) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
     }
 
 
     @RequiresApi(Build.VERSION_CODES.N)
-    override fun movePieceHidden() {
-        chessBack.movePieceHidden()
+    override fun checkCheck() {
+        chessBack.checkCheck()
     }
 }

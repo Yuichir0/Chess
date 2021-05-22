@@ -18,7 +18,6 @@ class ChessBack {
     var movePieceWasSuccesful = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
-    var chosenPromotion: ChessPieceType = ChessPieceType.PAWN
 
     init {
         reset()
@@ -334,35 +333,46 @@ class ChessBack {
                 moveHistory.removeLast()
             }
             pawnWasPromoted = false
+            whiteTurn = !whiteTurn
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun movePieceHidden() { // Для условия мата, в теории, надо к условию шаха добавить еще 1 проверку на ход каждой фигуры и последующей угрозы королю. А ничья будет при соблюдении обоих условий.
-        val whileTurnBackup = whiteTurn
+    fun checkCheck() { // Проверка на то, поставлен ли нах
+        val whiteTurnBackup = whiteTurn
+        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
+        whiteTurn = !whiteTurn
         pieceBox.toMutableList().forEach {
-            if (it.player == ChessPlayer.WHITE)
                 for (i in 0..7)
-                    for (j in 0..7) {
+                    for (j in 0..7)
+                        if (it.player == ChessPlayer.WHITE) {
                         movePiece(it.column, it.row, i, j)
-                        if (Pair(i, j) == kingBlackSquare && square(i, j)?.type != ChessPieceType.KING) {
+                        var blackKingAlive = false
+                        pieceBox.forEach { newIt ->
+                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
+                                blackKingAlive = true
+                        }
+                        if (!blackKingAlive) {
                             blackIsCheck = true
-                            Log.d(TAG, "black is Check = $blackIsCheck")
+                            Log.d(TAG, "black is Check = $blackIsCheck by $it")
                         }
                         previousTurn()
-                    }
-            if (it.player == ChessPlayer.BLACK)
-                for (i in 0..7)
-                    for (j in 0..7) {
+                    } else {
                         movePiece(it.column, it.row, i, j)
-                        if (Pair(i, j) == kingWhiteSquare && square(i, j)?.type != ChessPieceType.KING) {
+                        var whiteKingAlive = false
+                        pieceBox.forEach { newIt ->
+                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
+                                whiteKingAlive = true
+                        }
+                        if (!whiteKingAlive) {
                             whiteIsCheck = true
-                            Log.d(TAG, "white is Check = $whiteIsCheck")
+                            Log.d(TAG, "white is Check = $whiteIsCheck  by $it")
                         }
                         previousTurn()
                     }
         }
-        whiteTurn = whileTurnBackup
+        whiteTurn = whiteTurnBackup
+        movePieceWasSuccesful = movePieceWasSuccesfulBackup
     }
 
     fun reset() {

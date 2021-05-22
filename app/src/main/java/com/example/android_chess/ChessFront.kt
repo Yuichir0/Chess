@@ -74,8 +74,8 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
             MotionEvent.ACTION_UP -> {
                 finishColumn = ((event.x - startX) / squareSize).toInt()
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-                chessConnector?.movePieceHidden()
                 chessConnector?.movePiece(startColumn, startRow, finishColumn, finishRow)
+                chessConnector?.checkCheck()
 
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow, ${chessConnector?.square(finishColumn, finishRow)?.type})")
             }
