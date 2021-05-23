@@ -503,10 +503,7 @@ class ChessBack {
                         if (whiteMoveWasSuccesful) break@loop
                     }
         }
-        if (!blackMoveWasSuccesful || !whiteMoveWasSuccesful)
-            if (whiteIsCheck) gameOverWhiteWin = true
-            else if (blackIsCheck) gameOverBlackWin = true
-            else gameOverPat = true
+        if (!blackMoveWasSuccesful || !whiteMoveWasSuccesful) Log.d(TAG, "GAMEOVER")
         whiteTurn = whiteTurnBackup
         movePieceWasSuccesful = movePieceWasSuccesfulBackup
     }
