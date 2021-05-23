@@ -18,15 +18,6 @@ class ChessBack {
     var movePieceWasSuccesful = false
     var kingWhiteSquare = Pair(4, 0)
     var kingBlackSquare = Pair(4, 7)
-    var whiteKingAlive = false
-    var blackKingAlive = false
-    var blackMoveWasSuccesful = true
-    var whiteMoveWasSuccesful = true
-    var blackStillChecked = false
-    var whiteStillChecked = false
-    var gameOverWhiteWin = false
-    var gameOverBlackWin = false
-    var gameOverPat = false
 
     init {
         reset()
@@ -59,10 +50,10 @@ class ChessBack {
         var j = 0
         if (startColumn - finishColumn == startRow - finishRow)
             for (i in minColumn + 1 until maxColumn) {
-            j++
-            if (square(i, min(startRow, finishRow) + j) != null)
-                return false
-        } else for (i in minColumn + 1 until maxColumn) {
+                j++
+                if (square(i, min(startRow, finishRow) + j) != null)
+                    return false
+            } else for (i in minColumn + 1 until maxColumn) {
             j++
             if (square(i, max(startRow, finishRow) - j) != null)
                 return false
@@ -71,19 +62,19 @@ class ChessBack {
     }
     private fun canKnightMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
         return (abs(startColumn - finishColumn) == 1 && abs(startRow - finishRow) == 2) ||
-        (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1)
+                (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun canRookMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
         return (finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
-        ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))
+                ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun canBishopMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
         return abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
-               clearDiagonal(startColumn, startRow, finishColumn, finishRow)
+                clearDiagonal(startColumn, startRow, finishColumn, finishRow)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -343,26 +334,18 @@ class ChessBack {
             }
             pawnWasPromoted = false
             whiteTurn = !whiteTurn
-            pieceBox.forEach {
-                if (it.player == ChessPlayer.WHITE && it.type == ChessPieceType.KING)
-                    whiteKingAlive = true
-            }
-            pieceBox.forEach {
-                if (it.player == ChessPlayer.BLACK && it.type == ChessPieceType.KING)
-                    blackKingAlive = true
-            }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun checkCheck() { // Проверка на то, поставлен ли шах
+    fun checkCheck() { // Проверка на то, поставлен ли нах
         val whiteTurnBackup = whiteTurn
         val movePieceWasSuccesfulBackup = movePieceWasSuccesful
         whiteTurn = !whiteTurn
         pieceBox.toMutableList().forEach {
-                for (i in 0..7)
-                    for (j in 0..7)
-                        if (it.player == ChessPlayer.WHITE) {
+            for (i in 0..7)
+                for (j in 0..7)
+                    if (it.player == ChessPlayer.WHITE) {
                         movePiece(it.column, it.row, i, j)
                         var blackKingAlive = false
                         pieceBox.forEach { newIt ->
@@ -371,7 +354,7 @@ class ChessBack {
                         }
                         if (!blackKingAlive) {
                             blackIsCheck = true
-                            Log.d(TAG, "black is Check by $it")
+                            Log.d(TAG, "black is Check = $blackIsCheck by $it")
                         }
                         previousTurn()
                     } else {
@@ -383,127 +366,11 @@ class ChessBack {
                         }
                         if (!whiteKingAlive) {
                             whiteIsCheck = true
-                            Log.d(TAG, "white is Check by $it")
+                            Log.d(TAG, "white is Check = $whiteIsCheck  by $it")
                         }
                         previousTurn()
                     }
         }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Блокировка нелегальных ходов, если текущему игроку стоит шах
-        movePiece(startColumn, startRow, finishColumn, finishRow)
-        checkCheck()
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        var blackStillCheck = false
-        var whiteStillCheck = false
-        pieceBox.toMutableList().forEach {
-            for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        var blackKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
-                                blackKingAlive = true
-                        }
-                        if (!blackKingAlive) {
-                            blackStillCheck = true
-                            Log.d(TAG, "black is still Check by $it")
-                        }
-                        previousTurn()
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        var whiteKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
-                                whiteKingAlive = true
-                        }
-                        if (!whiteKingAlive) {
-                            whiteStillCheck = true
-                            Log.d(TAG, "white is still Check by $it")
-                        }
-                        previousTurn()
-                    }
-        }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
-        if (blackStillCheck || whiteStillCheck) previousTurn()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun stillChecked() { // Вспомогательная функция, определяющая, заблокирован ли ход
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        blackStillChecked = false
-        whiteStillChecked = false
-        whiteTurn = !whiteTurn
-        pieceBox.toMutableList().forEach {
-            for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        var blackKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
-                                blackKingAlive = true
-                        }
-                        if (!blackKingAlive) {
-                            blackStillChecked = true
-                            Log.d(TAG, "black is still Checked by $it")
-                        }
-                        previousTurn()
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        var whiteKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
-                                whiteKingAlive = true
-                        }
-                        if (!whiteKingAlive) {
-                            whiteStillChecked = true
-                            Log.d(TAG, "white is still Checked by $it")
-                        }
-                        previousTurn()
-                    }
-        }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun gameOver() { // Проверка на мат или пат
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        blackMoveWasSuccesful = false
-        whiteMoveWasSuccesful = false
-        pieceBox.toMutableList().forEach {
-             loop@for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        stillChecked()
-                        if (!blackStillChecked) {
-                            blackMoveWasSuccesful = true
-                            Log.d(TAG, "blackMoveWasSuccesful by $it to $i, $j")
-                        }
-                        previousTurn()
-                        if (blackMoveWasSuccesful) break@loop
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        stillChecked()
-                        if (!whiteStillChecked) {
-                            whiteMoveWasSuccesful = true
-                            Log.d(TAG, "whiteMoveWasSuccesful by $it to $i, $j")
-                        }
-                        previousTurn()
-                        if (whiteMoveWasSuccesful) break@loop
-                    }
-        }
-        if (!blackMoveWasSuccesful || !whiteMoveWasSuccesful) Log.d(TAG, "GAMEOVER")
         whiteTurn = whiteTurnBackup
         movePieceWasSuccesful = movePieceWasSuccesfulBackup
     }
