@@ -15,6 +15,9 @@ class ChessBack {
     var blackIsCheck = false
     var whiteIsCheck = false
     var lastMoveSuccessful = false
+    var pieceMoved = true
+    var pawnPromoted = false
+    var enPassant = false
 
     init {
         reset()
@@ -227,12 +230,12 @@ class ChessBack {
         if (lastMove.isNotEmpty()) {
             val lastMoveP2 = lastMove[lastMove.lastIndex]
             if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x + 1 <= 7) {
+                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x + 1 <= 7 && piece.x == lastMoveP2.toX - 1 && piece.y == lastMoveP2.toY) {
                 possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y + 1))
                 squareUnderAttack.add(Square(piece.x + 1, piece.y + 1))
             }
             if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x - 1 <= 7) {
+                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x - 1 <= 7 && piece.x == lastMoveP2.toX + 1 && piece.y == lastMoveP2.toY) {
                 possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y + 1))
                 squareUnderAttack.add(Square(piece.x - 1, piece.y + 1))
             }
@@ -257,12 +260,12 @@ class ChessBack {
         if (lastMove.isNotEmpty()) {
             val lastMoveP2 = lastMove[lastMove.lastIndex]
             if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                    piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x + 1 <= 7) {
+                    piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x + 1 <= 7 && piece.x == lastMoveP2.toX - 1 && piece.y == lastMoveP2.toY) {
                 possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y - 1))
                 squareUnderAttack.add(Square(piece.x + 1, piece.y - 1))
             }
             if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                    piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x - 1 >= 0) {
+                    piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x - 1 >= 0 && piece.x == lastMoveP2.toX + 1 && piece.y == lastMoveP2.toY) {
                 possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y - 1))
                 squareUnderAttack.add(Square(piece.x - 1, piece.y - 1))
             }
@@ -301,17 +304,16 @@ class ChessBack {
         val fromY = move.fromY
         val toX = move.toX
         val toY = move.toY
-        var pawnPromoted = false
         val movingPiece = square(fromX, fromY) ?: return
         blackIsCheck = false
         whiteIsCheck = false
         lastMoveSuccessful = false
-        var enPassant = false
         possibleMovesForAll()
         kingUnderCheck()
         possibleMovesForAll()
         if (move in possibleMoves) {
             Log.d(TAG, "$move")
+            pieceMoved = movingPiece.moved
             // Проверка, сделал ли игрок рокировку
             if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(fromX, fromY) && toX == 6 && toY == 0) {
                 pieceBox.add(ChessPiece(5, 0, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
@@ -333,25 +335,25 @@ class ChessBack {
             if (lastMove.isNotEmpty()) {
                 val lastMoveP2 = lastMove[lastMove.lastIndex]
                 if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                        movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x + 1 <= 7) {
+                        movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x + 1 <= 7 && movingPiece.x == lastMoveP2.toX - 1 && movingPiece.y == lastMoveP2.toY) {
                     capturedPieces.add(square(toX, toY - 1))
                     pieceBox.remove(square(toX, toY - 1))
                     enPassant = true
                 }
                 if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                        movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x - 1 >= 0) {
+                        movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x - 1 >= 0 && movingPiece.x == lastMoveP2.toX + 1 && movingPiece.y == lastMoveP2.toY) {
                     capturedPieces.add(square(toX, toY - 1))
                     pieceBox.remove(square(toX, toY - 1))
                     enPassant = true
                 }
                 if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                        movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x + 1 <= 7) {
+                        movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x + 1 <= 7 && movingPiece.x == lastMoveP2.toX - 1 && movingPiece.y == lastMoveP2.toY) {
                     capturedPieces.add(square(toX, toY + 1))
                     pieceBox.remove(square(toX, toY + 1))
                     enPassant = true
                 }
                 if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                        movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x - 1 >= 0) {
+                        movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x - 1 >= 0 && movingPiece.x == lastMoveP2.toX + 1 && movingPiece.y == lastMoveP2.toY) {
                     capturedPieces.add(square(toX, toY + 1))
                     pieceBox.remove(square(toX, toY + 1))
                     enPassant = true
@@ -386,15 +388,42 @@ class ChessBack {
     fun previousMove() {
         if (lastMoveSuccessful) {
             val moveR = lastMove[lastMove.lastIndex]
-            val fromX = moveR.toX
-            val fromY = moveR.toY
-            val toX = moveR.fromX
-            val toY = moveR.fromY
-            val movingPiece = square(fromX, fromY) ?: return
-            pieceBox.add(ChessPiece(toX, toY, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+            val toX = moveR.toX
+            val toY = moveR.toY
+            val fromX = moveR.fromX
+            val fromY = moveR.fromY
+            val movingPiece = square(toX, toY) ?: return
+            // Откат если пешка -> королева
+            if (pawnPromoted)
+                if (movingPiece.player == ChessPlayer.WHITE) pieceBox.add(ChessPiece(fromX, fromY, movingPiece.player, ChessPieceType.PAWN, R.drawable.wp, pieceMoved))
+                else pieceBox.add(ChessPiece(fromX, fromY, movingPiece.player, ChessPieceType.PAWN, R.drawable.bp, pieceMoved))
+            else pieceBox.add(ChessPiece(fromX, fromY, movingPiece.player, movingPiece.type, movingPiece.pieceType, pieceMoved))
+            // Просто откат
             pieceBox.remove(movingPiece)
-            if (capturedPieces[capturedPieces.lastIndex]?.x == toX && capturedPieces[capturedPieces.lastIndex]?.y == toY)
+            if (capturedPieces.isNotEmpty() && capturedPieces[capturedPieces.lastIndex]?.x == toX && capturedPieces[capturedPieces.lastIndex]?.y == toY)
                 capturedPieces[capturedPieces.lastIndex]?.let { pieceBox.add(it) }
+            // Откат если en passant
+            if (enPassant) capturedPieces[capturedPieces.lastIndex]?.let { pieceBox.add(it) }
+            // Откат если рокировка
+            if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(toX, toY) && toX == 6 && toY == 0) {
+                pieceBox.add(ChessPiece(7, 0, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, false))
+                pieceBox.remove(square(5,0))
+            }
+            if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(toX, toY) && toX == 2 && toY == 0) {
+                pieceBox.add(ChessPiece(0, 0, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, false))
+                pieceBox.remove(square(3,0))
+            }
+            if (fromX == 4 && fromY == 7 && kingBlackSquare == Square(toX, toY) && toX == 6 && toY == 7) {
+                pieceBox.add(ChessPiece(7, 7, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, false))
+                pieceBox.remove(square(5,7))
+            }
+            if (fromX == 4 && fromY == 7 && kingBlackSquare == Square(toX, toY) && toX == 2 && toY == 7) {
+                pieceBox.add(ChessPiece(0, 7, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, false))
+                pieceBox.remove(square(3,7))
+            }
+            if (Square(toX, toY) == kingBlackSquare) kingBlackSquare = Square(fromX, fromY)
+            if (Square(toX, toY) == kingWhiteSquare) kingWhiteSquare = Square(fromX, fromY)
+            whiteTurn = !whiteTurn
         }
     }
 

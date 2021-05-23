@@ -22,12 +22,27 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         val chessFront: ChessFront = findViewById<ChessFront>(R.id.chess_view)
         chessFront.chessConnector = this
         findViewById<Button>(R.id.reset_button).setOnClickListener {
-            chessBack.reset()
             chessBack.whiteTurn = true
+            chessBack.possibleMoves.clear()
+            chessBack.legalMoves.clear()
+            chessBack.squareUnderAttack.clear()
             chessBack.kingWhiteSquare = Square(4, 0)
             chessBack.kingBlackSquare = Square(4, 7)
+            chessBack.capturedPieces.clear()
+            chessBack.lastMove.clear()
+            chessBack.pieceBox.clear()
+            chessBack.blackIsCheck = false
+            chessBack.whiteIsCheck = false
+            chessBack.lastMoveSuccessful = false
+            chessBack.enPassant = false
+            chessBack.pawnPromoted = false
+            chessBack.reset()
             chessFront.invalidate()
             Log.d(TAG, "New game")
+        }
+        findViewById<Button>(R.id.previous_button).setOnClickListener {
+            chessBack.previousMove()
+            chessFront.invalidate()
         }
     }
 
