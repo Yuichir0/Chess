@@ -308,10 +308,12 @@ class ChessBack {
         blackIsCheck = false
         whiteIsCheck = false
         lastMoveSuccessful = false
+        enPassant = false
         possibleMovesForAll()
         kingUnderCheck()
         possibleMovesForAll()
-        if (move in possibleMoves) {
+        if (move in possibleMoves)
+            if ((whiteTurn && movingPiece.player == ChessPlayer.WHITE) || (!whiteTurn && movingPiece.player == ChessPlayer.BLACK)) {
             Log.d(TAG, "$move")
             pieceMoved = movingPiece.moved
             // Проверка, сделал ли игрок рокировку
@@ -382,6 +384,7 @@ class ChessBack {
             pieceBox.remove(movingPiece)
             lastMove.add(move)
             lastMoveSuccessful = true
+            whiteTurn = !whiteTurn
         }
     }
 
@@ -421,6 +424,7 @@ class ChessBack {
                 pieceBox.add(ChessPiece(0, 7, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, false))
                 pieceBox.remove(square(3,7))
             }
+
             if (Square(toX, toY) == kingBlackSquare) kingBlackSquare = Square(fromX, fromY)
             if (Square(toX, toY) == kingWhiteSquare) kingWhiteSquare = Square(fromX, fromY)
             whiteTurn = !whiteTurn
@@ -433,7 +437,7 @@ class ChessBack {
         kingUnderCheck()
         possibleMovesForAll()
         possibleMoves.forEach {
-            move(moveFromPlayer)
+            move(it)
         }
     }
 
