@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         findViewById<Button>(R.id.reset_button).setOnClickListener {
             chessBack.reset()
             chessBack.whiteTurn = true
+            chessBack.kingWhiteSquare = Square(4, 0)
+            chessBack.kingBlackSquare = Square(4, 7)
             chessFront.invalidate()
             Log.d(TAG, "New game")
         }
