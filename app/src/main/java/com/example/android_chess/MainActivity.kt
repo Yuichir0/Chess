@@ -36,6 +36,9 @@ class MainActivity : AppCompatActivity(), ChessConnector {
             chessBack.lastMoveSuccessful = false
             chessBack.enPassant = false
             chessBack.pawnPromoted = false
+            chessBack.blackWin = false
+            chessBack.whiteWin = false
+            chessBack.pat = false
             chessBack.reset()
             chessFront.invalidate()
             Log.d(TAG, "New game")
@@ -56,6 +59,18 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         val toX = move.toX
         val toY = move.toY
         chessBack.move(Move(fromX, fromY, toX, toY))
+        findViewById<ChessFront>(R.id.chess_view).invalidate()
+    }
+
+    override fun legalMovesForAll(moveFromPlayer: Move) {
+        val fromX = moveFromPlayer.fromX
+        val fromY = moveFromPlayer.fromY
+        val toX = moveFromPlayer.toX
+        val toY = moveFromPlayer.toY
+        chessBack.legalMovesForAll(Move(fromX, fromY, toX, toY))
+        if (chessBack.whiteWin) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
+        if (chessBack.blackWin) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
+        if (chessBack.pat) Toast.makeText(applicationContext, "Everyone lost!", Toast.LENGTH_LONG).show()
         findViewById<ChessFront>(R.id.chess_view).invalidate()
     }
 }

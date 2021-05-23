@@ -18,6 +18,11 @@ class ChessBack {
     var pieceMoved = true
     var pawnPromoted = false
     var enPassant = false
+    var blackBlocked = false
+    var whiteBlocked = false
+    var whiteWin = false
+    var blackWin = false
+    var pat = false
 
     init {
         reset()
@@ -97,7 +102,7 @@ class ChessBack {
                 }
             }
 
-            if (piece.x + i >= 0 && piece.y - i >= 0 && !stop2) {
+            if (piece.x + i <= 7 && piece.y - i >= 0 && !stop2) {
                 stop2 = true
                 if (piece.player != square(piece.x + i, piece.y - i)?.player && square(piece.x + i, piece.y - i)?.player != null) {
                     possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y - i))
@@ -109,7 +114,7 @@ class ChessBack {
                 }
             }
 
-            if (piece.x - i >= 0 && piece.y + i >= 0 && !stop3) {
+            if (piece.x - i >= 0 && piece.y + i <= 7 && !stop3) {
                 stop3 = true
                 if (piece.player != square(piece.x - i, piece.y + i)?.player && square(piece.x - i, piece.y + i)?.player != null) {
                     possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y + i))
@@ -121,7 +126,7 @@ class ChessBack {
                 }
             }
 
-            if (piece.x + i >= 0 && piece.y + i >= 0 && !stop4) {
+            if (piece.x + i <= 7 && piece.y + i <= 7 && !stop4) {
                 stop4 = true
                 if (piece.player != square(piece.x + i, piece.y + i)?.player && square(piece.x + i, piece.y + i)?.player != null) {
                     possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y + i))
@@ -235,7 +240,7 @@ class ChessBack {
                 squareUnderAttack.add(Square(piece.x + 1, piece.y + 1))
             }
             if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
-                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x - 1 <= 7 && piece.x == lastMoveP2.toX + 1 && piece.y == lastMoveP2.toY) {
+                    piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x - 1 >= 0 && piece.x == lastMoveP2.toX + 1 && piece.y == lastMoveP2.toY) {
                 possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y + 1))
                 squareUnderAttack.add(Square(piece.x - 1, piece.y + 1))
             }
@@ -247,7 +252,7 @@ class ChessBack {
         }
 
 
-        if (piece.player == ChessPlayer.WHITE && !piece.moved && square(piece.x, piece.y + 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + 2))
+        if (piece.player == ChessPlayer.WHITE && !piece.moved && square(piece.x, piece.y + 1) == null && (square(piece.x, piece.y + 2) == null)) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + 2))
 
 
         // Черные пешки
@@ -276,7 +281,7 @@ class ChessBack {
         }
 
 
-        if (piece.player == ChessPlayer.BLACK && !piece.moved && square(piece.x, piece.y - 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - 2))
+        if (piece.player == ChessPlayer.BLACK && !piece.moved && square(piece.x, piece.y - 1) == null && (square(piece.x, piece.y - 2) == null)) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - 2))
     }
 
     private fun possibleMovesForAll() {
@@ -291,7 +296,6 @@ class ChessBack {
             if (it.type == ChessPieceType.KNIGHT) possibleMoveKnight(it)
             if (it.type == ChessPieceType.PAWN) possibleMovePawn(it)
         }
-        Log.d(TAG, "$possibleMoves")
     }
 
     private fun kingUnderCheck() {
@@ -314,7 +318,6 @@ class ChessBack {
         possibleMovesForAll()
         if (move in possibleMoves)
             if ((whiteTurn && movingPiece.player == ChessPlayer.WHITE) || (!whiteTurn && movingPiece.player == ChessPlayer.BLACK)) {
-            Log.d(TAG, "$move")
             pieceMoved = movingPiece.moved
             // Проверка, сделал ли игрок рокировку
             if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(fromX, fromY) && toX == 6 && toY == 0) {
@@ -388,7 +391,7 @@ class ChessBack {
         }
     }
 
-    fun previousMove() {
+    fun previousMove() { // Откат для проверки шаха мата пата
         if (lastMoveSuccessful) {
             val moveR = lastMove[lastMove.lastIndex]
             val toX = moveR.toX
@@ -436,9 +439,149 @@ class ChessBack {
         possibleMovesForAll()
         kingUnderCheck()
         possibleMovesForAll()
-        possibleMoves.forEach {
+        possibleMoves.toMutableList().forEach {
             move(it)
+            possibleMovesForAll()
+            blackIsCheck = false
+            whiteIsCheck = false
+            kingUnderCheck()
+            if (!blackIsCheck && whiteTurn) {
+                legalMoves.add(it)
+            }
+            if (!whiteIsCheck && !whiteTurn) {
+                legalMoves.add(it)
+            }
+            previousMove()
         }
+        Log.d(TAG, "Square under attack = $squareUnderAttack")
+        Log.d(TAG, "$moveFromPlayer")
+        Log.d(TAG, "Possible: $possibleMoves")
+        Log.d(TAG, "Legal: $legalMoves")
+        Log.d(TAG, "Black blocked = $blackBlocked")
+        Log.d(TAG, "Black check = $blackIsCheck")
+        Log.d(TAG, "White blocked = $whiteBlocked")
+        Log.d(TAG, "White check = $whiteIsCheck")
+        Log.d(TAG, "AFTER PLAYER MOVE")
+        val fromX = moveFromPlayer.fromX
+        val fromY = moveFromPlayer.fromY
+        val toX = moveFromPlayer.toX
+        val toY = moveFromPlayer.toY
+        val movingPiece = square(fromX, fromY) ?: return
+        blackIsCheck = false
+        whiteIsCheck = false
+        lastMoveSuccessful = false
+        enPassant = false
+        possibleMovesForAll()
+        kingUnderCheck()
+        possibleMovesForAll()
+        if (moveFromPlayer in legalMoves)
+            if ((whiteTurn && movingPiece.player == ChessPlayer.WHITE) || (!whiteTurn && movingPiece.player == ChessPlayer.BLACK)) {
+                Log.d(TAG, "$moveFromPlayer")
+                pieceMoved = movingPiece.moved
+                // Проверка, сделал ли игрок рокировку
+                if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(fromX, fromY) && toX == 6 && toY == 0) {
+                    pieceBox.add(ChessPiece(5, 0, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                    pieceBox.remove(square(7,0))
+                }
+                if (fromX == 4 && fromY == 0 && kingWhiteSquare == Square(fromX, fromY) && toX == 2 && toY == 0) {
+                    pieceBox.add(ChessPiece(3, 0, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
+                    pieceBox.remove(square(0,0))
+                }
+                if (fromX == 4 && fromY == 7 && kingBlackSquare == Square(fromX, fromY) && toX == 6 && toY == 7) {
+                    pieceBox.add(ChessPiece(5, 7, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                    pieceBox.remove(square(7,7))
+                }
+                if (fromX == 4 && fromY == 7 && kingBlackSquare == Square(fromX, fromY) && toX == 2 && toY == 7) {
+                    pieceBox.add(ChessPiece(3, 7, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
+                    pieceBox.remove(square(0,7))
+                }
+                // Проверка, рубили ли с En Passant
+                if (lastMove.isNotEmpty()) {
+                    val lastMoveP2 = lastMove[lastMove.lastIndex]
+                    if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
+                            movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x + 1 <= 7 && movingPiece.x == lastMoveP2.toX - 1 && movingPiece.y == lastMoveP2.toY) {
+                        capturedPieces.add(square(toX, toY - 1))
+                        pieceBox.remove(square(toX, toY - 1))
+                        enPassant = true
+                    }
+                    if (lastMoveP2.toY == 4 && lastMoveP2.fromY == 6 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
+                            movingPiece.player == ChessPlayer.WHITE && movingPiece.y + 1 <= 7 && movingPiece.x - 1 >= 0 && movingPiece.x == lastMoveP2.toX + 1 && movingPiece.y == lastMoveP2.toY) {
+                        capturedPieces.add(square(toX, toY - 1))
+                        pieceBox.remove(square(toX, toY - 1))
+                        enPassant = true
+                    }
+                    if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
+                            movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x + 1 <= 7 && movingPiece.x == lastMoveP2.toX - 1 && movingPiece.y == lastMoveP2.toY) {
+                        capturedPieces.add(square(toX, toY + 1))
+                        pieceBox.remove(square(toX, toY + 1))
+                        enPassant = true
+                    }
+                    if (lastMoveP2.toY == 3 && lastMoveP2.fromY == 1 && square(lastMoveP2.toX, lastMoveP2.toY)?.type == ChessPieceType.PAWN &&
+                            movingPiece.player == ChessPlayer.BLACK && movingPiece.y - 1 >= 0 && movingPiece.x - 1 >= 0 && movingPiece.x == lastMoveP2.toX + 1 && movingPiece.y == lastMoveP2.toY) {
+                        capturedPieces.add(square(toX, toY + 1))
+                        pieceBox.remove(square(toX, toY + 1))
+                        enPassant = true
+                    }
+                }
+                // Проверка, дошла ли пешка до конца
+                if (toY == 7 && movingPiece.type == ChessPieceType.PAWN) {
+                    pawnPromoted = true
+                    pieceBox.add(ChessPiece(toX, toY, movingPiece.player, ChessPieceType.QUEEN, R.drawable.wq, true))
+                }
+                if (toY == 0 && movingPiece.type == ChessPieceType.PAWN) {
+                    pawnPromoted = true
+                    pieceBox.add(ChessPiece(toX, toY, movingPiece.player, ChessPieceType.QUEEN, R.drawable.bq, true))
+                }
+                // Рублю фигуру
+                if (Square(toX, toY) in squareUnderAttack && !enPassant) {
+                    capturedPieces.add(square(toX, toY))
+                    pieceBox.remove(square(toX, toY))
+                }
+                // Запоминаю клетку короля
+                if (Square(fromX, fromY) == kingBlackSquare) kingBlackSquare = Square(toX, toY)
+                if (Square(fromX, fromY) == kingWhiteSquare) kingWhiteSquare = Square(toX, toY)
+                // Передвигаю фигуру, записываю последний ход
+                if (!pawnPromoted) pieceBox.add(ChessPiece(toX, toY, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+                pieceBox.remove(movingPiece)
+                lastMove.add(moveFromPlayer)
+                lastMoveSuccessful = true
+                whiteTurn = !whiteTurn
+            }
+
+        legalMoves.clear()
+        possibleMovesForAll()
+        kingUnderCheck()
+        possibleMovesForAll()
+        blackBlocked = true
+        whiteBlocked = true
+        possibleMoves.toMutableList().forEach {
+            move(it)
+            possibleMovesForAll()
+            blackIsCheck = false
+            whiteIsCheck = false
+            kingUnderCheck()
+            if (!blackIsCheck && whiteTurn) {
+                blackBlocked = false
+                legalMoves.add(it)
+            }
+            if (!whiteIsCheck && !whiteTurn) {
+                whiteBlocked = false
+                legalMoves.add(it)
+            }
+            previousMove()
+        }
+        Log.d(TAG, "Square under attack = $squareUnderAttack")
+        Log.d(TAG, "$moveFromPlayer")
+        Log.d(TAG, "Possible: $possibleMoves")
+        Log.d(TAG, "Legal: $legalMoves")
+        Log.d(TAG, "Black blocked = $blackBlocked")
+        Log.d(TAG, "Black check = $blackIsCheck")
+        Log.d(TAG, "White blocked = $whiteBlocked")
+        Log.d(TAG, "White check = $whiteIsCheck")
+
+        if (blackBlocked && blackIsCheck) whiteWin = true
+        else if (whiteBlocked && whiteIsCheck) blackWin = true
+        else if (blackBlocked || whiteBlocked) pat = true
     }
 
     fun reset() { // Заполняет коробку фигурами

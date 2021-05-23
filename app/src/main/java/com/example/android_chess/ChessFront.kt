@@ -76,7 +76,7 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
                 val chessBack = ChessBack()
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow, ${chessConnector?.square(finishColumn, finishRow)?.type})")
-                chessConnector?.move(Move(startColumn, startRow, finishColumn, finishRow))
+                chessConnector?.legalMovesForAll(Move(startColumn, startRow, finishColumn, finishRow))
 //                chessBack.possibleMoves
             }
         }
