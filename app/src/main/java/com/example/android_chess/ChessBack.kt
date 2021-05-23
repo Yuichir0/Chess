@@ -9,510 +9,270 @@ import java.lang.Integer.min
 import kotlin.math.abs
 
 class ChessBack {
-    var pieceBox = mutableSetOf<ChessPiece>()
-    var capturedPieces = mutableListOf<ChessPiece>()
-    var moveHistory = mutableListOf<Int>()
+    var pieceBox = mutableSetOf<ChessPiece>() // Список фигур на доске
+    var possibleMoves = mutableListOf<Move>() // Возможные ходы без проверки на шах
+    var legalMoves = mutableListOf<Move>() // Возможные ходы для игрока
+    var squareUnderAttack = mutableListOf<Square>() // Список клеток под атакой
     var whiteTurn = true // Переменная для проверки того, кто ходит
-    var blackIsCheck = false
-    var whiteIsCheck = false
-    var movePieceWasSuccesful = false
-    var kingWhiteSquare = Pair(4, 0)
-    var kingBlackSquare = Pair(4, 7)
-    var whiteKingAlive = false
-    var blackKingAlive = false
-    var blackMoveWasSuccesful = true
-    var whiteMoveWasSuccesful = true
-    var blackStillChecked = false
-    var whiteStillChecked = false
-    var gameOverWhiteWin = false
-    var gameOverBlackWin = false
-    var gameOverPat = false
+    var capturedPieces = mutableListOf<ChessPiece?>()
+    var kingWhiteSquare = Square(4, 0)
+    var kingBlackSquare = Square(4, 7)
 
     init {
         reset()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun clearColumn(startColumn: Int, finishColumn: Int, startRow: Int): Boolean {
-        val minColumn = min(startColumn, finishColumn)
-        val maxColumn = max(startColumn, finishColumn)
-        for (i in minColumn + 1 until maxColumn)
-            if (square(i, startRow) != null)
-                return false
-        return true
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun clearRow(startRow: Int, finishRow: Int, startColumn: Int): Boolean {
-        val minRow = min(startRow, finishRow)
-        val maxRow = max(startRow, finishRow)
-        for (i in minRow + 1 until maxRow)
-            if (square(startColumn, i) != null)
-                return false
-        return true
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun clearDiagonal(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        val minColumn = min(startColumn, finishColumn)
-        val maxColumn = max(startColumn, finishColumn)
-        var j = 0
-        if (startColumn - finishColumn == startRow - finishRow)
-            for (i in minColumn + 1 until maxColumn) {
-                j++
-                if (square(i, min(startRow, finishRow) + j) != null)
-                    return false
-            } else for (i in minColumn + 1 until maxColumn) {
-            j++
-            if (square(i, max(startRow, finishRow) - j) != null)
-                return false
-        }
-        return true
-    }
-    private fun canKnightMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return (abs(startColumn - finishColumn) == 1 && abs(startRow - finishRow) == 2) ||
-                (abs(startColumn - finishColumn) == 2 && abs(startRow - finishRow) == 1)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun canRookMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return (finishColumn - startColumn == 0 && clearRow(startRow, finishRow, startColumn)) ||
-                ((finishRow - startRow == 0) && clearColumn(startColumn, finishColumn, startRow))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun canBishopMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return abs(finishColumn - startColumn) == abs(finishRow - startRow) &&
-                clearDiagonal(startColumn, startRow, finishColumn, finishRow)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun canQueenMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return canRookMove(startColumn, startRow, finishColumn, finishRow) ||
-                canBishopMove(startColumn, startRow, finishColumn, finishRow)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun canKingMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return (abs(finishColumn - startColumn) <= 1 && abs(finishRow - startRow) <= 1) ||
-                (square(startColumn, startRow)?.moved == false && square(startColumn + 1, startRow) == null && square(startColumn + 2, startRow) == null &&
-                        square(startColumn + 3, startRow)?.moved == false && (finishColumn - startColumn == 2) && (finishRow - startRow == 0 && !whiteIsCheck && !blackIsCheck)) ||
-                (square(startColumn, startRow)?.moved == false && square(startColumn - 1, startRow) == null && square(startColumn - 2, startRow) == null && square(startColumn - 3, startRow) == null &&
-                        square(startColumn - 4, startRow)?.moved == false && (finishColumn - startColumn == -2) && (finishRow - startRow == 0 && !whiteIsCheck && !blackIsCheck))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun canPawnMove(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int): Boolean {
-        return (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
-                (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -1 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null) ||
-                (abs(finishColumn - startColumn) == 1 && abs(finishRow - startRow) == 1 && square(finishColumn, finishRow) != null) ||
-                (square(startColumn, startRow)?.player == ChessPlayer.WHITE && (finishRow - startRow) == 2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
-                        square(finishColumn, finishRow - 1) == null && square(startColumn, startRow)?.moved == false) ||
-                (square(startColumn, startRow)?.player == ChessPlayer.BLACK && (finishRow - startRow) == -2 && abs (finishColumn - startColumn) == 0 && square(finishColumn, finishRow) == null &&
-                        square(finishColumn, finishRow + 1) == null && square(startColumn, startRow)?.moved == false) ||
-                (abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 && moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) || // En Passant
-                (abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 && moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
-        movePieceWasSuccesful = false
-        val movingPiece = square(startColumn, startRow) ?: return
-
-        if (whiteTurn && movingPiece.player == ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
-            if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.KNIGHT) ||
-                    (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.ROOK) ||
-                    (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.BISHOP) ||
-                    (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.QUEEN) ||
-                    (canKingMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.KING) ||
-                    (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.PAWN)) {
-                square(finishColumn, finishRow)?.let {
-                    if (it.player == movingPiece.player) return
-                    capturedPieces.add(it)
-                    moveHistory.add(0)
-                    pieceBox.remove(it)
+    private fun possibleMoveRook(piece: ChessPiece, range: Int) {
+        var stop1 = false
+        var stop2 = false
+        var stop3 = false
+        var stop4 = false
+        for (i in 1..range) {
+            if (piece.x - i >= 0 && !stop1) {
+                stop1 = true
+                if (piece.player != square(piece.x - i, piece.y)?.player && square(piece.x - i, piece.y)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y))
+                    squareUnderAttack.add(Square(piece.x - i, piece.y))
                 }
-
-                if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
-
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                    moveHistory.add(-1)
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                    moveHistory.add(-2)
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                    moveHistory.add(-3)
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                    moveHistory.add(-4)
-                }
-                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 &&
-                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) {
-                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
-                    pieceBox.remove(square(finishColumn, finishRow - 1))
-                    moveHistory.add(0)
-                }
-                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
-                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
-                    square(finishColumn, finishRow + 1)?.let { capturedPieces.add(it) }
-                    pieceBox.remove(square(finishColumn, finishRow + 1))
-                    moveHistory.add(0)
-                }
-
-                if (movingPiece.type == ChessPieceType.KING && movingPiece.player == ChessPlayer.WHITE) kingWhiteSquare = Pair(finishColumn, finishRow)
-                if (movingPiece.type == ChessPieceType.KING && movingPiece.player == ChessPlayer.BLACK) kingBlackSquare = Pair(finishColumn, finishRow)
-
-                val movedModificator = movingPiece.moved
-                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
-                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
-                movePieceWasSuccesful = true
-                pieceBox.remove(movingPiece)
-                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
-                whiteTurn = false
-                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && (finishRow == 7 || finishRow == 0)) {
-                    pieceBox.remove(square(finishColumn, finishRow))
-                    moveHistory.add(-5)
-                    if (finishRow == 7) pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.wq, true))
-                    else pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.bq, true))
+                if (square(piece.x - i, piece.y) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y))
+                    stop1 = false
                 }
             }
-        }
 
-        else if (!whiteTurn && movingPiece.player != ChessPlayer.WHITE && movingPiece != square(finishColumn, finishRow)) {
-            if ((canKnightMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.KNIGHT) ||
-                    (canRookMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.ROOK) ||
-                    (canBishopMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.BISHOP) ||
-                    (canQueenMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.QUEEN) ||
-                    (canKingMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.KING) ||
-                    (canPawnMove(startColumn, startRow, finishColumn, finishRow) &&
-                            movingPiece.type == ChessPieceType.PAWN)) {
-                square(finishColumn, finishRow)?.let {
-                    if (it.player == movingPiece.player) return
-                    capturedPieces.add(it)
-                    moveHistory.add(0)
-                    pieceBox.remove(it)
+            if (piece.x + i <= 7 && !stop2) {
+                stop2 = true
+                if (piece.player != square(piece.x + i, piece.y)?.player && square(piece.x + i, piece.y)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y))
+                    squareUnderAttack.add(Square(piece.x + i, piece.y))
                 }
+                if (square(piece.x + i, piece.y) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y))
+                    stop2 = false
+                }
+            }
 
-                if (finishColumn < 0 || finishColumn > 7 || finishRow < 0 || finishRow > 7) return
+            if (piece.y - i >= 0 && !stop3) {
+                stop3 = true
+                if (piece.player != square(piece.x, piece.y - i)?.player && square(piece.x, piece.y - i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - i))
+                    squareUnderAttack.add(Square(piece.x, piece.y - i))
+                }
+                if (square(piece.x, piece.y - i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - i))
+                    stop3 = false
+                }
+            }
 
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 0) { // Проверка рокировки для перемещения ладьи
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                    moveHistory.add(-1)
+            if (piece.y + i <= 7 && !stop4) {
+                stop4 = true
+                if (piece.player != square(piece.x, piece.y + i)?.player && square(piece.x, piece.y + i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + i))
+                    squareUnderAttack.add(Square(piece.x, piece.y + i))
                 }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == 2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn + 3, startRow))
-                    pieceBox.add(ChessPiece(finishColumn - 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                    moveHistory.add(-2)
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 0) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.wr, true))
-                    moveHistory.add(-3)
-                }
-                if (movingPiece.type == ChessPieceType.KING && (finishColumn - startColumn) == -2 && startRow == 7) {
-                    pieceBox.remove(square(startColumn - 4, startRow))
-                    pieceBox.add(ChessPiece(finishColumn + 1, finishRow, movingPiece.player, ChessPieceType.ROOK, R.drawable.br, true))
-                    moveHistory.add(-4)
-                }
-                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == 1 &&
-                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 604 && startRow == 4)) {
-                    square(finishColumn, finishRow - 1)?.let { capturedPieces.add(it) }
-                    pieceBox.remove(square(finishColumn, finishRow - 1))
-                    moveHistory.add(0)
-                }
-                if (movingPiece.type == ChessPieceType.PAWN && abs(finishColumn - startColumn) == 1 && (finishRow - startRow) == -1 &&
-                        moveHistory.isNotEmpty() && (moveHistory[moveHistory.lastIndex] == finishColumn * 1010 + 103 && startRow == 3)) {
-                    square(finishColumn, finishRow + 1)?.let { capturedPieces.add(it) }
-                    pieceBox.remove(square(finishColumn, finishRow + 1))
-                    moveHistory.add(0)
-                }
-
-                if (movingPiece.type == ChessPieceType.KING && movingPiece.player == ChessPlayer.WHITE) kingWhiteSquare = Pair(finishColumn, finishRow)
-                if (movingPiece.type == ChessPieceType.KING && movingPiece.player == ChessPlayer.BLACK) kingBlackSquare = Pair(finishColumn, finishRow)
-
-                val movedModificator = movingPiece.moved
-                if (movedModificator) moveHistory.add((startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow) + 10000)
-                else moveHistory.add(startColumn * 1000 + startRow * 100 + finishColumn * 10 + finishRow)
-                movePieceWasSuccesful = true
-                pieceBox.remove(movingPiece)
-                pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
-                whiteTurn = true
-                if (square(finishColumn, finishRow)?.type == ChessPieceType.PAWN && (finishRow == 7 || finishRow == 0)) {
-                    pieceBox.remove(square(finishColumn, finishRow))
-                    moveHistory.add(-5)
-                    if (finishRow == 7) pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.wq, true))
-                    else pieceBox.add(ChessPiece(finishColumn, finishRow, movingPiece.player, ChessPieceType.QUEEN, R.drawable.bq, true))
+                if (square(piece.x, piece.y + i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + i))
+                    stop4 = false
                 }
             }
         }
     }
 
-    fun previousTurn() {
-        if (movePieceWasSuccesful) {
-            var lastMove = moveHistory[moveHistory.lastIndex]
-            var movedModificator = false
-            val finishRow: Int
-            val finishColumn: Int
-            val startRow: Int
-            val startColumn: Int
-            var pawnWasPromoted = false
-            if (moveHistory[moveHistory.lastIndex] == -5) {
-                moveHistory.removeLast()
-                pawnWasPromoted = true
-            }
-            lastMove = moveHistory[moveHistory.lastIndex]
-
-            if (lastMove < 10000) {
-                finishRow = lastMove % 10
-                finishColumn = lastMove % 100 / 10
-                startRow = lastMove % 1000 / 100
-                startColumn = lastMove / 1000
-            } else {
-                finishRow = lastMove % 10
-                finishColumn = lastMove % 100 / 10
-                startRow = lastMove % 1000 / 100
-                startColumn = lastMove % 10000 / 1000
-                movedModificator = true
+    private fun possibleMoveBishop(piece: ChessPiece, range: Int) {
+        var stop1 = false
+        var stop2 = false
+        var stop3 = false
+        var stop4 = false
+        for (i in 1..range) {
+            if (piece.x - i >= 0 && piece.y - i >= 0 && !stop1) {
+                stop1 = true
+                if (piece.player != square(piece.x - i, piece.y - i)?.player && square(piece.x - i, piece.y - i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y - i))
+                    squareUnderAttack.add(Square(piece.x - i, piece.y - i))
+                }
+                if (square(piece.x - i, piece.y - i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y - i))
+                    stop1 = false
+                }
             }
 
-            val movedPiece = square(finishColumn, finishRow) ?: return
-            pieceBox.remove(movedPiece)
-
-            if (movedModificator) pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, true))
-            else pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, movedPiece.type, movedPiece.pieceType, false))
-
-            if (pawnWasPromoted && movedPiece.player == ChessPlayer.WHITE) {
-                pieceBox.remove(square(startColumn, startRow))
-                pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.wp, true))
+            if (piece.x + i >= 0 && piece.y - i >= 0 && !stop2) {
+                stop2 = true
+                if (piece.player != square(piece.x + i, piece.y - i)?.player && square(piece.x + i, piece.y - i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y - i))
+                    squareUnderAttack.add(Square(piece.x + i, piece.y - i))
+                }
+                if (square(piece.x + i, piece.y - i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y - i))
+                    stop2 = false
+                }
             }
 
-            if (pawnWasPromoted && movedPiece.player == ChessPlayer.BLACK) {
-                pieceBox.remove(square(startColumn, startRow))
-                pieceBox.add(ChessPiece(startColumn, startRow, movedPiece.player, ChessPieceType.PAWN, R.drawable.bp, true))
+            if (piece.x - i >= 0 && piece.y + i >= 0 && !stop3) {
+                stop3 = true
+                if (piece.player != square(piece.x - i, piece.y + i)?.player && square(piece.x - i, piece.y + i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y + i))
+                    squareUnderAttack.add(Square(piece.x - i, piece.y + i))
+                }
+                if (square(piece.x - i, piece.y + i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x - i, piece.y + i))
+                    stop3 = false
+                }
             }
 
-            if (movedPiece.type == ChessPieceType.KING && movedPiece.player == ChessPlayer.WHITE) kingWhiteSquare = Pair(startColumn, startRow)
-            if (movedPiece.type == ChessPieceType.KING && movedPiece.player == ChessPlayer.BLACK) kingBlackSquare = Pair(startColumn, startRow)
-            moveHistory.removeLast()
-
-            if (moveHistory.isNotEmpty() && moveHistory[moveHistory.lastIndex] == 0) {
-                pieceBox.add(capturedPieces[capturedPieces.lastIndex])
-                capturedPieces.removeLast()
-                moveHistory.removeLast()
-            }
-            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -1) {
-                pieceBox.remove(square(5, 0))
-                pieceBox.add(ChessPiece(7, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr, false))
-                moveHistory.removeLast()
-            }
-            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -2) {
-                pieceBox.remove(square(5, 7))
-                pieceBox.add(ChessPiece(7, 7, ChessPlayer.BLACK, ChessPieceType.ROOK, R.drawable.br, false))
-                moveHistory.removeLast()
-            }
-            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -3) {
-                pieceBox.remove(square(3, 0))
-                pieceBox.add(ChessPiece(0, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.wr, false))
-                moveHistory.removeLast()
-            }
-            if (moveHistory.size > 2 && moveHistory[moveHistory.lastIndex] == -4) {
-                pieceBox.remove(square(3, 0))
-                pieceBox.add(ChessPiece(7, 0, ChessPlayer.WHITE, ChessPieceType.ROOK, R.drawable.br, false))
-                moveHistory.removeLast()
-            }
-            pawnWasPromoted = false
-            whiteTurn = !whiteTurn
-            pieceBox.forEach {
-                if (it.player == ChessPlayer.WHITE && it.type == ChessPieceType.KING)
-                    whiteKingAlive = true
-            }
-            pieceBox.forEach {
-                if (it.player == ChessPlayer.BLACK && it.type == ChessPieceType.KING)
-                    blackKingAlive = true
+            if (piece.x + i >= 0 && piece.y + i >= 0 && !stop4) {
+                stop4 = true
+                if (piece.player != square(piece.x + i, piece.y + i)?.player && square(piece.x + i, piece.y + i)?.player != null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y + i))
+                    squareUnderAttack.add(Square(piece.x + i, piece.y + i))
+                }
+                if (square(piece.x + i, piece.y + i) == null) {
+                    possibleMoves.add(Move(piece.x, piece.y, piece.x + i, piece.y + i))
+                    stop4 = false
+                }
             }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun checkCheck() { // Проверка на то, поставлен ли шах
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        whiteIsCheck = false
-        blackIsCheck = false
-        whiteTurn = !whiteTurn
-        pieceBox.toMutableList().forEach {
-            for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        var blackKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
-                                blackKingAlive = true
-                        }
-                        if (!blackKingAlive) {
-                            blackIsCheck = true
-                            Log.d(TAG, "black is Check by $it")
-                        }
-                        previousTurn()
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        var whiteKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
-                                whiteKingAlive = true
-                        }
-                        if (!whiteKingAlive) {
-                            whiteIsCheck = true
-                            Log.d(TAG, "white is Check by $it")
-                        }
-                        previousTurn()
-                    }
-        }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
+    private fun possibleMoveQueen(piece: ChessPiece) {
+        possibleMoveRook(piece, 7)
+        possibleMoveBishop(piece, 7)
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) { // Блокировка нелегальных ходов, если текущему игроку стоит шах
-        movePiece(startColumn, startRow, finishColumn, finishRow)
-        checkCheck()
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        var blackStillCheck = false
-        var whiteStillCheck = false
-        pieceBox.toMutableList().forEach {
-            for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        var blackKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
-                                blackKingAlive = true
-                        }
-                        if (!blackKingAlive) {
-                            blackStillCheck = true
-                            Log.d(TAG, "black is still Check by $it")
-                        }
-                        previousTurn()
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        var whiteKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
-                                whiteKingAlive = true
-                        }
-                        if (!whiteKingAlive) {
-                            whiteStillCheck = true
-                            Log.d(TAG, "white is still Check by $it")
-                        }
-                        previousTurn()
-                    }
-        }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
-        if (blackStillCheck || whiteStillCheck) previousTurn()
+    private fun possibleMoveKing(piece: ChessPiece) { //TODO
+        possibleMoveRook(piece, 1)
+        possibleMoveBishop(piece, 1)
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun stillChecked() { // Вспомогательная функция, определяющая, заблокирован ли ход
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        blackStillChecked = false
-        whiteStillChecked = false
-        pieceBox.toMutableList().forEach {
-            for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        var blackKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.BLACK && newIt.type == ChessPieceType.KING)
-                                blackKingAlive = true
-                        }
-                        if (!blackKingAlive) {
-                            blackStillChecked = true
-                            Log.d(TAG, "black is still Checked by $it")
-                        }
-                        previousTurn()
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        var whiteKingAlive = false
-                        pieceBox.forEach { newIt ->
-                            if (newIt.player == ChessPlayer.WHITE && newIt.type == ChessPieceType.KING)
-                                whiteKingAlive = true
-                        }
-                        if (!whiteKingAlive) {
-                            whiteStillChecked = true
-                            Log.d(TAG, "white is still Checked by $it")
-                        }
-                        previousTurn()
-                    }
+    private fun possibleMoveKnight(piece: ChessPiece) {
+        if (piece.x - 1 >= 0 && piece.y - 2 >= 0) {
+            if (piece.player != square(piece.x - 1, piece.y - 2)?.player && square(piece.x - 1, piece.y - 2)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y - 2))
+                squareUnderAttack.add(Square(piece.x - 1, piece.y - 2))
+            }
+            if (square(piece.x - 1, piece.y - 2) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y - 2))
         }
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
+
+        if (piece.x - 2 >= 0 && piece.y - 1 >= 0) {
+            if (piece.player != square(piece.x - 2, piece.y - 1)?.player && square(piece.x - 2, piece.y - 1)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x - 2, piece.y - 1))
+                squareUnderAttack.add(Square(piece.x - 2, piece.y - 1))
+            }
+        if (square(piece.x - 2, piece.y - 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x - 2, piece.y - 1))
+        }
+
+        if (piece.x + 1 <= 7 && piece.y - 2 >= 0) {
+            if (piece.player != square(piece.x + 1, piece.y - 2)?.player && square(piece.x + 1, piece.y - 2)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y - 2))
+                squareUnderAttack.add(Square(piece.x + 1, piece.y - 2))
+            }
+            if (square(piece.x + 1, piece.y - 2) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y - 2))
+        }
+
+        if (piece.x + 2 <= 7 && piece.y - 1 >= 0) {
+            if (piece.player != square(piece.x + 2, piece.y - 1)?.player && square(piece.x + 2, piece.y - 1)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x + 2, piece.y - 1))
+                squareUnderAttack.add(Square(piece.x + 2, piece.y - 1))
+            }
+            if (square(piece.x + 2, piece.y - 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x + 2, piece.y - 1))
+        }
+
+        if (piece.x - 1 >= 0 && piece.y + 2 <= 7) {
+            if (piece.player != square(piece.x - 1, piece.y + 2)?.player && square(piece.x - 1, piece.y + 2)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y + 2))
+                squareUnderAttack.add(Square(piece.x - 1, piece.y + 2))
+            }
+            if (square(piece.x - 1, piece.y + 2) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y + 2))
+        }
+
+        if (piece.x - 2 >= 0 && piece.y + 1 <= 7) {
+            if (piece.player != square(piece.x - 2, piece.y + 1)?.player && square(piece.x - 2, piece.y + 1)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x - 2, piece.y + 1))
+                squareUnderAttack.add(Square(piece.x - 2, piece.y + 1))
+            }
+            if (square(piece.x - 2, piece.y + 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x - 2, piece.y + 1))
+        }
+
+        if (piece.x + 1 <= 7 && piece.y + 2 <= 7) {
+            if (piece.player != square(piece.x + 1, piece.y + 2)?.player && square(piece.x + 1, piece.y + 2)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y + 2))
+                squareUnderAttack.add(Square(piece.x + 1, piece.y + 2))
+            }
+            if (square(piece.x + 1, piece.y + 2) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y + 2))
+        }
+
+        if (piece.x + 2 <= 7 && piece.y + 1 <= 7) {
+            if (piece.player != square(piece.x + 2, piece.y + 1)?.player && square(piece.x + 2, piece.y + 1)?.player != null) {
+                possibleMoves.add(Move(piece.x, piece.y, piece.x + 2, piece.y + 1))
+                squareUnderAttack.add(Square(piece.x + 2, piece.y + 1))
+            }
+            if (square(piece.x + 2, piece.y + 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x + 2, piece.y + 1))
+        }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun gameOver() { // Проверка на мат или пат
-        val whiteTurnBackup = whiteTurn
-        val movePieceWasSuccesfulBackup = movePieceWasSuccesful
-        blackMoveWasSuccesful = false
-        whiteMoveWasSuccesful = false
-        pieceBox.toMutableList().forEach {
-            loop@for (i in 0..7)
-                for (j in 0..7)
-                    if (it.player == ChessPlayer.WHITE) {
-                        movePiece(it.column, it.row, i, j)
-                        stillChecked()
-                        if (!blackStillChecked) {
-                            blackMoveWasSuccesful = true
-                            Log.d(TAG, "blackMoveWasSuccesful by $it to $i, $j")
-                        }
-                        previousTurn()
-                        if (blackMoveWasSuccesful) break@loop
-                    } else {
-                        movePiece(it.column, it.row, i, j)
-                        stillChecked()
-                        if (!whiteStillChecked) {
-                            whiteMoveWasSuccesful = true
-                            Log.d(TAG, "whiteMoveWasSuccesful by $it to $i, $j")
-                        }
-                        previousTurn()
-                        if (whiteMoveWasSuccesful) break@loop
-                    }
+    private fun possibleMovePawn(piece: ChessPiece) {
+        // Белые пешки
+        if (piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && (square(piece.x, piece.y + 1) == null)) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + 1))
+        if (piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x + 1 <= 7 && piece.player != square(piece.x + 1, piece.y + 1)?.player && square(piece.x + 1, piece.y + 1)?.player != null) {
+            possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y + 1))
+            squareUnderAttack.add(Square(piece.x + 1, piece.y + 1))
         }
-        if (!blackMoveWasSuccesful || !whiteMoveWasSuccesful)
-            if (whiteIsCheck) gameOverWhiteWin = true
-            else if (blackIsCheck) gameOverBlackWin = true
-            else gameOverPat = true
-        whiteTurn = whiteTurnBackup
-        movePieceWasSuccesful = movePieceWasSuccesfulBackup
+
+        if (piece.player == ChessPlayer.WHITE && piece.y + 1 <= 7 && piece.x - 1 >= 0 && piece.player != square(piece.x - 1, piece.y + 1)?.player && square(piece.x - 1, piece.y + 1)?.player != null) {
+            possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y + 1))
+            squareUnderAttack.add(Square(piece.x - 1, piece.y + 1))
+        }
+
+        if (piece.player == ChessPlayer.WHITE && !piece.moved && square(piece.x, piece.y + 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y + 2))
+
+        // Черные пешки
+        if (piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && (square(piece.x, piece.y - 1) == null)) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - 1))
+        if (piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x + 1 <= 7 && piece.player != square(piece.x + 1, piece.y - 1)?.player && square(piece.x + 1, piece.y - 1)?.player != null) {
+            possibleMoves.add(Move(piece.x, piece.y, piece.x + 1, piece.y - 1))
+            squareUnderAttack.add(Square(piece.x + 1, piece.y - 1))
+        }
+
+        if (piece.player == ChessPlayer.BLACK && piece.y - 1 >= 0 && piece.x - 1 >= 0 && piece.player != square(piece.x - 1, piece.y - 1)?.player && square(piece.x - 1, piece.y - 1)?.player != null) {
+            possibleMoves.add(Move(piece.x, piece.y, piece.x - 1, piece.y - 1))
+            squareUnderAttack.add(Square(piece.x - 1, piece.y - 1))
+        }
+
+        if (piece.player == ChessPlayer.BLACK && !piece.moved && square(piece.x, piece.y - 1) == null) possibleMoves.add(Move(piece.x, piece.y, piece.x, piece.y - 2))
     }
 
-    fun reset() {
+    fun move(move: Move) {
+        val fromX = move.fromX
+        val fromY = move.fromY
+        val toX = move.toX
+        val toY = move.toY
+        val movingPiece = square(fromX, fromY) ?: return
+        possibleMoves.clear()
+        capturedPieces.clear()
+        squareUnderAttack.clear()
+
+        pieceBox.forEach { // Заполнение possibleMoves
+            if (it.type == ChessPieceType.ROOK) possibleMoveRook(it, 7)
+            if (it.type == ChessPieceType.BISHOP) possibleMoveBishop(it, 7)
+            if (it.type == ChessPieceType.QUEEN) possibleMoveQueen(it)
+            if (it.type == ChessPieceType.KING) possibleMoveKing(it)
+            if (it.type == ChessPieceType.KNIGHT) possibleMoveKnight(it)
+            if (it.type == ChessPieceType.PAWN) possibleMovePawn(it)
+        }
+        Log.d(TAG, "$possibleMoves")
+
+        if (move in possibleMoves) {
+            Log.d(TAG, "$move")
+            if (Square(toX, toY) in squareUnderAttack) {
+                Log.d(TAG, "Tried to attack")
+                capturedPieces.add(square(toX, toY))
+                pieceBox.remove(square(toX, toY))
+            }
+            pieceBox.add(ChessPiece(toX, toY, movingPiece.player, movingPiece.type, movingPiece.pieceType, true))
+            pieceBox.remove(movingPiece)
+        }
+    }
+
+    fun reset() { // Заполняет коробку фигурами
         pieceBox.removeAll(pieceBox)
         for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp, false))
         for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp, false))
@@ -528,13 +288,13 @@ class ChessBack {
         pieceBox.add(ChessPiece(4,7, ChessPlayer.BLACK, ChessPieceType.KING, R.drawable.bk, false))
     }
 
-    fun square(column: Int, row: Int): ChessPiece? {
+    fun square(x: Int, y: Int): ChessPiece? { // Возвращает фигуру по клетке
         for (piece in pieceBox)
-            if (column == piece.column && row == piece.row) return piece
+            if (x == piece.x && y == piece.y) return piece
         return null
     }
 
-    override fun toString(): String {
+    override fun toString(): String { // Вывод доски в Logcat
         var desc = " "
         for (row in 7 downTo 0) {
             desc += "$row"

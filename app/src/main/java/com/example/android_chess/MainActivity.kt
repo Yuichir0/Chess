@@ -23,48 +23,22 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         chessFront.chessConnector = this
         findViewById<Button>(R.id.reset_button).setOnClickListener {
             chessBack.reset()
-            chessBack.blackIsCheck = false
-            chessBack.whiteIsCheck = false
             chessBack.whiteTurn = true
             chessFront.invalidate()
             Log.d(TAG, "New game")
         }
-        findViewById<Button>(R.id.previous_button).setOnClickListener {
-            if (chessBack.moveHistory.isNotEmpty()) {
-                chessBack.previousTurn()
-                chessFront.invalidate()
-                Log.d(TAG, "Previous move")
-            }
-        }
     }
 
-    override fun square(column: Int, row: Int): ChessPiece? {
-        return chessBack.square(column, row)
+    override fun square(x: Int, y: Int): ChessPiece? {
+        return chessBack.square(x, y)
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun movePiece(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
-        chessBack.movePiece(startColumn, startRow, finishColumn, finishRow)
-    }
-
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun checkCheck() {
-        chessBack.checkCheck()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun moveCheckBlock(startColumn: Int, startRow: Int, finishColumn: Int, finishRow: Int) {
-        chessBack.moveCheckBlock(startColumn, startRow, finishColumn, finishRow)
+    override fun move(move: Move) {
+        val fromX = move.fromX
+        val fromY = move.fromY
+        val toX = move.toX
+        val toY = move.toY
+        chessBack.move(Move(fromX, fromY, toX, toY))
         findViewById<ChessFront>(R.id.chess_view).invalidate()
-        if (chessBack.whiteIsCheck || chessBack.blackIsCheck) Toast.makeText(applicationContext, "Check!", Toast.LENGTH_SHORT).show()
-        if (chessBack.gameOverBlackWin) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
-        if (chessBack.gameOverWhiteWin) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
-        if (chessBack.gameOverPat) Toast.makeText(applicationContext, "Everyone lost!", Toast.LENGTH_LONG).show()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun gameOver() {
-        chessBack.gameOver()
     }
 }
