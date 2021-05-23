@@ -18,12 +18,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal">
-        <Button
-            android:id="@+id/previous_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:text="@string/Previous"/>
+
         <Button
             android:id="@+id/reset_button"
             android:layout_width="wrap_content"

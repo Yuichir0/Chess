@@ -3,23 +3,23 @@ package com.example.android_chess
 import android.util.Log
 
 class ChessBack {
-    var pieceBox = mutableSetOf<ChessPiece>() // Список фигур на доске
-    var possibleMoves = mutableListOf<Move>() // Возможные ходы без проверки на шах
-    var legalMoves = mutableListOf<Move>() // Возможные ходы для игрока
-    var squareUnderAttack = mutableListOf<Square>() // Список клеток под атакой
-    var whiteTurn = true // Переменная для проверки того, кто ходит
-    var kingWhiteSquare = Square(4, 0)
-    var kingBlackSquare = Square(4, 7)
-    var capturedPieces = mutableListOf<ChessPiece?>() // Съеденные фигуры (используется только последняя)
-    var lastMove = mutableListOf<Move>() // Последний ход (пусть и лист, но используется только последний)
-    var blackIsCheck = false
-    var whiteIsCheck = false
-    var lastMoveSuccessful = false
-    var pieceMoved = true
-    var pawnPromoted = false
-    var enPassant = false
-    var blackBlocked = false
-    var whiteBlocked = false
+    private var pieceBox = mutableSetOf<ChessPiece>() // Список фигур на доске
+    private var possibleMoves = mutableListOf<Move>() // Возможные ходы без проверки на шах
+    private var legalMoves = mutableListOf<Move>() // Возможные ходы для игрока
+    private var squareUnderAttack = mutableListOf<Square>() // Список клеток под атакой
+    private var whiteTurn = true // Переменная для проверки того, кто ходит
+    private var kingWhiteSquare = Square(4, 0)
+    private var kingBlackSquare = Square(4, 7)
+    private var capturedPieces = mutableListOf<ChessPiece?>() // Съеденные фигуры (используется только последняя)
+    private var lastMove = mutableListOf<Move>() // Последний ход (пусть и лист, но используется только последний)
+    private var blackIsCheck = false
+    private var whiteIsCheck = false
+    private var lastMoveSuccessful = false
+    private var pieceMoved = true
+    private var pawnPromoted = false
+    private var enPassant = false
+    private var blackBlocked = false
+    private var whiteBlocked = false
     var whiteWin = false
     var blackWin = false
     var pat = false
@@ -145,7 +145,7 @@ class ChessBack {
         possibleMoveBishop(piece, 7)
     }
 
-    private fun possibleMoveKing(piece: ChessPiece) { //TODO нельзя рокироваться при шахе
+    private fun possibleMoveKing(piece: ChessPiece) {
         possibleMoveRook(piece, 1)
         possibleMoveBishop(piece, 1)
         if (!piece.moved && piece.player == ChessPlayer.WHITE && !whiteIsCheck) {
@@ -303,7 +303,7 @@ class ChessBack {
         if (kingWhiteSquare in squareUnderAttack) whiteIsCheck = true
     }
 
-    fun move(move: Move) {
+    private fun move(move: Move) {
         val fromX = move.fromX
         val fromY = move.fromY
         val toX = move.toX
@@ -391,7 +391,7 @@ class ChessBack {
         }
     }
 
-    fun previousMove() { // Откат для проверки шаха мата пата
+    private fun previousMove() { // Откат для проверки шаха мата пата
         if (lastMoveSuccessful) {
             val moveR = lastMove[lastMove.lastIndex]
             val toX = moveR.toX
@@ -585,6 +585,23 @@ class ChessBack {
     }
 
     fun reset() { // Заполняет коробку фигурами
+        whiteTurn = true
+        possibleMoves.clear()
+        legalMoves.clear()
+        squareUnderAttack.clear()
+        kingWhiteSquare = Square(4, 0)
+        kingBlackSquare = Square(4, 7)
+        capturedPieces.clear()
+        lastMove.clear()
+        pieceBox.clear()
+        blackIsCheck = false
+        whiteIsCheck = false
+        lastMoveSuccessful = false
+        enPassant = false
+        pawnPromoted = false
+        blackWin = false
+        whiteWin = false
+        pat = false
         pieceBox.removeAll(pieceBox)
         for (i in 0..7) pieceBox.add(ChessPiece(i,1, ChessPlayer.WHITE, ChessPieceType.PAWN, R.drawable.wp, false))
         for (i in 0..7) pieceBox.add(ChessPiece(i,6, ChessPlayer.BLACK, ChessPieceType.PAWN, R.drawable.bp, false))

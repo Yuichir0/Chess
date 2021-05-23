@@ -8,7 +8,6 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import java.lang.Integer.min
 
@@ -74,10 +73,8 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
             MotionEvent.ACTION_UP -> {
                 finishColumn = ((event.x - startX) / squareSize).toInt()
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-                val chessBack = ChessBack()
                 Log.d(TAG, "pressed up at ($finishColumn, $finishRow, ${chessConnector?.square(finishColumn, finishRow)?.type})")
                 chessConnector?.legalMovesForAll(Move(startColumn, startRow, finishColumn, finishRow))
-//                chessBack.possibleMoves
             }
         }
         return true
