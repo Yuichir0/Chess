@@ -21,4 +21,9 @@ class MainActivityTest {
     fun onClick() {
         onView(withId(R.id.reset_button)).perform(click())
     }
+
+    @Test
+    fun movePiece() {
+        onView(withId(R.id.reset_button)).perform()
+    }
 }

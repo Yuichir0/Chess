@@ -77,15 +77,24 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
     }
 
     private fun loadPieces(canvas: Canvas) {
-        val chessBack = ChessBack()
-        chessBack.reset()
         for (row in 0..7)
             for (column in 0..7) {
                 val piece = chessConnector?.square(column, row)
-                if (piece != null)
-                    loadPieceAt(canvas, column, row, piece.pieceType)
+                if (piece != null) {
+                    val white = piece.player == ChessPlayer.WHITE
+                    val frontPieceType: Int = when (piece.type) {
+                        ChessPieceType.KING -> if (white) R.drawable.wk else R.drawable.bk
+                        ChessPieceType.QUEEN -> if (white) R.drawable.wq else R.drawable.bq
+                        ChessPieceType.ROOK -> if (white) R.drawable.wr else R.drawable.br
+                        ChessPieceType.BISHOP -> if (white) R.drawable.wb else R.drawable.bb
+                        ChessPieceType.KNIGHT -> if (white) R.drawable.wh else R.drawable.bh
+                        ChessPieceType.PAWN -> if (white) R.drawable.wp else R.drawable.bp
+                    }
+                    loadPieceAt(canvas, column, row, frontPieceType)
+                }
             }
     }
+
 
     private fun loadPieceAt(canvas: Canvas, column: Int, row: Int, pieceName: Int) {
         val loadingPiece = bitmaps[pieceName]!!
