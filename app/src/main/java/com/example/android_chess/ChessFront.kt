@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.*
 import android.os.Build
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.RequiresApi
@@ -49,7 +48,6 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
         val chessBoardSide = min(width, height) * 0.95
         squareSize = (chessBoardSide / 8).toFloat()
@@ -68,13 +66,11 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
             MotionEvent.ACTION_DOWN -> {
                 startColumn = ((event.x - startX) / squareSize).toInt()
                 startRow = 7 - ((event.y - startY) / squareSize).toInt()
-                Log.d(TAG, "pressed down at ($startColumn, $startRow, ${chessConnector?.square(startColumn, startRow)?.type})")
             }
             MotionEvent.ACTION_UP -> {
                 finishColumn = ((event.x - startX) / squareSize).toInt()
                 finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-                Log.d(TAG, "pressed up at ($finishColumn, $finishRow, ${chessConnector?.square(finishColumn, finishRow)?.type})")
-                chessConnector?.legalMovesForAll(Move(startColumn, startRow, finishColumn, finishRow))
+                chessConnector?.moveFromPlayer(Move(startColumn, startRow, finishColumn, finishRow))
             }
         }
         return true

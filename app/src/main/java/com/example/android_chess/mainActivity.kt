@@ -15,14 +15,12 @@ class MainActivity : AppCompatActivity(), ChessConnector {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         Log.d(TAG, "$chessBack")
         val chessFront: ChessFront = findViewById(R.id.chess_view)
         chessFront.chessConnector = this
         findViewById<Button>(R.id.reset_button).setOnClickListener {
             chessBack.reset()
             chessFront.invalidate()
-            Log.d(TAG, "New game")
         }
     }
 
@@ -30,12 +28,12 @@ class MainActivity : AppCompatActivity(), ChessConnector {
         return chessBack.square(x, y)
     }
 
-    override fun legalMovesForAll(moveFromPlayer: Move) {
+    override fun moveFromPlayer(moveFromPlayer: Move) {
         val fromX = moveFromPlayer.fromX
         val fromY = moveFromPlayer.fromY
         val toX = moveFromPlayer.toX
         val toY = moveFromPlayer.toY
-        chessBack.legalMovesForAll(Move(fromX, fromY, toX, toY))
+        chessBack.moveFromPlayer(Move(fromX, fromY, toX, toY))
         if (chessBack.whiteWin) Toast.makeText(applicationContext, "White win!", Toast.LENGTH_LONG).show()
         if (chessBack.blackWin) Toast.makeText(applicationContext, "Black win!", Toast.LENGTH_LONG).show()
         if (chessBack.pat) Toast.makeText(applicationContext, "Everyone lost!", Toast.LENGTH_LONG).show()

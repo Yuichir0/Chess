@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".MainActivity">
 
 <com.example.android_chess.ChessFront
     android:id="@+id/chess_view"
@@ -26,6 +27,5 @@
             android:layout_margin="8dp"
             android:text="@string/reset"/>
     </LinearLayout>
-
 
 </LinearLayout>

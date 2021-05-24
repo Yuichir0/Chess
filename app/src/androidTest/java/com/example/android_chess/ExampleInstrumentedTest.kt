@@ -22,3 +22,5 @@ class ExampleInstrumentedTest {
         assertEquals("com.example.android_chess", appContext.packageName)
     }
 }
+
+
