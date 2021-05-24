@@ -58,19 +58,25 @@ class ChessFront(context: Context?, attrs: AttributeSet?): View(context, attrs) 
         loadPieces(canvas)
     }
 
+    var clickedOnce = false
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event ?: return false
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                startColumn = ((event.x - startX) / squareSize).toInt()
-                startRow = 7 - ((event.y - startY) / squareSize).toInt()
-            }
             MotionEvent.ACTION_UP -> {
-                finishColumn = ((event.x - startX) / squareSize).toInt()
-                finishRow = 7 - ((event.y - startY) / squareSize).toInt()
-                chessConnector?.moveFromPlayer(Move(startColumn, startRow, finishColumn, finishRow))
+                if (!clickedOnce) {
+                    startColumn = ((event.x - startX) / squareSize).toInt()
+                    startRow = 7 - ((event.y - startY) / squareSize).toInt()
+                    if (chessConnector?.square(startColumn, startRow) != null)
+                        clickedOnce = true
+                } else {
+                    finishColumn = ((event.x - startX) / squareSize).toInt()
+                    finishRow = 7 - ((event.y - startY) / squareSize).toInt()
+                    chessConnector?.moveFromPlayer(Move(startColumn, startRow, finishColumn, finishRow))
+                    clickedOnce = false
+                }
             }
         }
         return true

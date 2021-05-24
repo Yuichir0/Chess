@@ -143,18 +143,23 @@ class ChessBackTest {
         movingPiece = chessBack.square(3,5)
         chessBack.moveFromPlayer(Move(3,5,4,4)) // Атака пешкой с D6 пешки на E5
         assertEquals(movingPiece?.player, chessBack.square(4,4)?.player) // Проверка, что пешка срубила по диагонали на 1
+    }
 
-        chessBack.moveFromPlayer(Move(0,1,0,2)) // Случайные ходы, чтобы довести черную пешку до ряда 0
-        chessBack.moveFromPlayer(Move(4,4,4,3))
-        chessBack.moveFromPlayer(Move(5,1,5,2))
-        chessBack.moveFromPlayer(Move(4,3,5,2))
-        chessBack.moveFromPlayer(Move(0,2,0,3))
-        chessBack.moveFromPlayer(Move(5,2,6,1))
-        chessBack.moveFromPlayer(Move(0,3,0,4))
+    @Test
+    fun pawnToQueen() {
+        val chessBack = ChessBack()
+        chessBack.moveFromPlayer(Move(7,1,7,3)) // Случайные ходы, чтобы довести пешку до последнего ряда
+        chessBack.moveFromPlayer(Move(6,6,6,4))
+        chessBack.moveFromPlayer(Move(7,3,6,4))
+        chessBack.moveFromPlayer(Move(7,6,7,5))
+        chessBack.moveFromPlayer(Move(6,4,7,5))
+        chessBack.moveFromPlayer(Move(5,7,6,6))
+        chessBack.moveFromPlayer(Move(7,5,6,6))
+        chessBack.moveFromPlayer(Move(6,7,5,5))
 
-        chessBack.moveFromPlayer(Move(6,1,7,0)) // Пешка ходит на H1 и превращается в королеву
-        assertEquals(ChessPieceType.QUEEN, chessBack.square(7,0)?.type) // Проверка, что пешка повысилась
-        assertEquals(ChessPlayer.BLACK, chessBack.square(7,0)?.player)
+        chessBack.moveFromPlayer(Move(6,6,7,7)) // Пешка рубит ладью на H7 и превращается в королеву
+        assertEquals(ChessPieceType.QUEEN, chessBack.square(7,7)?.type) // Проверка, что пешка повысилась
+        assertEquals(ChessPlayer.WHITE, chessBack.square(7,7)?.player)
     }
 
     @Test
